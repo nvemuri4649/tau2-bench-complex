@@ -8,6 +8,17 @@ DEFAULT_SAVE_TO = None
 DEFAULT_LOG_LEVEL = "ERROR"
 
 # LLM
+# Available models:
+#   OpenAI: gpt-4.1, gpt-4o, gpt-4o-mini, gpt-5.2, gpt-5.2-chat-latest, gpt-5.2-pro
+#   Anthropic: claude-3-5-sonnet-20241022, claude-3-opus-20240229
+# 
+# GPT-5.2 Notes (released Dec 2025):
+#   - gpt-5.2: Thinking model, 400K context, best for complex reasoning
+#   - gpt-5.2-chat-latest: Instant model, 128K context, optimized for everyday tasks  
+#   - gpt-5.2-pro: Pro model, 400K context, highest accuracy
+#   - Pricing: $1.75/M input, $14/M output (gpt-5.2/chat-latest)
+#   - Pricing: $21/M input, $168/M output (gpt-5.2-pro)
+
 DEFAULT_AGENT_IMPLEMENTATION = "llm_agent"
 DEFAULT_USER_IMPLEMENTATION = "user_simulator"
 DEFAULT_LLM_AGENT = "gpt-4.1"
@@ -16,6 +27,10 @@ DEFAULT_LLM_TEMPERATURE_AGENT = 0.0
 DEFAULT_LLM_TEMPERATURE_USER = 0.0
 DEFAULT_LLM_ARGS_AGENT = {"temperature": DEFAULT_LLM_TEMPERATURE_AGENT}
 DEFAULT_LLM_ARGS_USER = {"temperature": DEFAULT_LLM_TEMPERATURE_USER}
+
+# For complex tasks with long tool responses, GPT-5.2 is recommended
+DEFAULT_LLM_AGENT_COMPLEX = "gpt-5.2"
+DEFAULT_LLM_USER_COMPLEX = "gpt-5.2-chat-latest"
 
 DEFAULT_LLM_NL_ASSERTIONS = "gpt-4o-mini"
 DEFAULT_LLM_NL_ASSERTIONS_TEMPERATURE = 0.0

@@ -710,6 +710,90 @@ class RetailTools(ToolKitBase):  # Tools
         """
         return "Transfer successful"
 
+    # ==================== ASSERTION FUNCTIONS FOR EVALUATION ====================
+    # These functions are used by the evaluation system to verify task completion
+
+    def assert_order_status(self, order_id: str, expected_status: str) -> bool:
+        """Assert that an order has the expected status."""
+        order = self._get_order(order_id)
+        return order.status == expected_status
+
+    def assert_order_item_count(self, order_id: str, expected_count: int) -> bool:
+        """Assert that an order has the expected number of items."""
+        order = self._get_order(order_id)
+        return len(order.items) == expected_count
+
+    def assert_order_has_item(self, order_id: str, item_id: str) -> bool:
+        """Assert that an order contains a specific item."""
+        order = self._get_order(order_id)
+        return any(item.item_id == item_id for item in order.items)
+
+    def assert_order_cancel_reason(self, order_id: str, expected_reason: str) -> bool:
+        """Assert that a cancelled order has the expected reason."""
+        order = self._get_order(order_id)
+        return order.cancel_reason == expected_reason
+
+    def assert_order_exchange_items(self, order_id: str, expected_item_ids: list) -> bool:
+        """Assert that an order has the expected exchange items."""
+        order = self._get_order(order_id)
+        if order.exchange_items is None:
+            return expected_item_ids is None or len(expected_item_ids) == 0
+        return sorted(order.exchange_items) == sorted(expected_item_ids)
+
+    def assert_order_return_items(self, order_id: str, expected_item_ids: list) -> bool:
+        """Assert that an order has the expected return items."""
+        order = self._get_order(order_id)
+        if order.return_items is None:
+            return expected_item_ids is None or len(expected_item_ids) == 0
+        return sorted(order.return_items) == sorted(expected_item_ids)
+
+    def assert_user_gift_card_balance(self, user_id: str, gift_card_id: str, expected_balance: float) -> bool:
+        """Assert that a user's gift card has the expected balance."""
+        user = self._get_user(user_id)
+        if gift_card_id not in user.payment_methods:
+            return False
+        pm = user.payment_methods[gift_card_id]
+        return isinstance(pm, GiftCard) and abs(pm.balance - expected_balance) < 0.01
+
+    def assert_user_order_count(self, user_id: str, expected_count: int) -> bool:
+        """Assert that a user has the expected number of orders."""
+        user = self._get_user(user_id)
+        return len(user.orders) == expected_count
+
+    def assert_order_address_zip(self, order_id: str, expected_zip: str) -> bool:
+        """Assert that an order has the expected shipping zip code."""
+        order = self._get_order(order_id)
+        return order.address.zip == expected_zip
+
+    def assert_order_address_city(self, order_id: str, expected_city: str) -> bool:
+        """Assert that an order has the expected shipping city."""
+        order = self._get_order(order_id)
+        return order.address.city == expected_city
+
+    def assert_product_variant_available(self, product_id: str, variant_id: str) -> bool:
+        """Assert that a product variant is available."""
+        variant = self._get_variant(product_id, variant_id)
+        return variant.available
+
+    def assert_order_payment_method(self, order_id: str, expected_payment_method_id: str) -> bool:
+        """Assert that an order's first payment was made with the expected method."""
+        order = self._get_order(order_id)
+        if not order.payment_history:
+            return False
+        return order.payment_history[0].payment_method_id == expected_payment_method_id
+
+    def assert_order_total_payment(self, order_id: str, expected_total: float) -> bool:
+        """Assert that an order's total payments match expected amount."""
+        order = self._get_order(order_id)
+        total = sum(p.amount for p in order.payment_history if p.transaction_type == "payment")
+        return abs(total - expected_total) < 0.01
+
+    def assert_user_address_zip(self, user_id: str, expected_zip: str) -> bool:
+        """Assert that a user's default address has the expected zip code."""
+        user = self._get_user(user_id)
+        return user.address.zip == expected_zip
+
+
 
 if __name__ == "__main__":
     from tau2.domains.retail.utils import RETAIL_DB_PATH

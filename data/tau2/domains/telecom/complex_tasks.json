@@ -1,0 +1,2253 @@
+[
+  {
+    "id": "[complex]billing_plus_technical_suspended_line",
+    "description": {
+      "purpose": "Tests agent ability to handle compound issue: suspended line due to overdue bill PLUS data issue after resume. Requires: 1) identifying suspended line, 2) finding overdue bill, 3) processing payment, 4) resuming line, 5) then troubleshooting data. Agent must query each system and NOT hallucinate bill amounts or line status.",
+      "relevant_policies": "Line Suspension, Overdue Bill Payment, Technical Support",
+      "notes": "Multi-phase task requiring 8+ tool calls minimum. Tests information verification and sequential problem solving."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 35-year-old small business owner who runs a local landscaping company, you depend heavily on your phone for coordinating with crews and clients. You're usually organized and keep meticulous records of your expenses, but the past month has been hectic with the spring rush season.\n\nYour communication style is direct and businesslike - you appreciate efficiency and don't like to waste time. When there's a problem, you want it fixed quickly. However, you're not rude; you understand that service workers are doing their jobs and treat them with respect.\n\nTechnically, you're competent but not an expert. You can navigate your phone's settings if given clear instructions, and you understand basic troubleshooting concepts. You get frustrated when your tools don't work because downtime means lost revenue.\n\nWhen receiving unexpected news (like an overdue bill), you react with surprise but not anger. You take responsibility for oversights and want to resolve them immediately. You always verify information before making payments - it's the business owner in you.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "Your phone has no service at all - can't make calls, send texts, or use data. You need to get it working urgently for business. You're not sure why it stopped working.",
+        "known_info": "You are Michael Lee. Your phone number is 555-123-2009. Your date of birth is 1978-04-30. Your email is michael.lee@example.com.",
+        "unknown_info": "You don't know that your line is suspended. You don't know the exact amount of your overdue bill. You don't remember if you have any payment method on file.",
+        "task_instructions": "When the agent asks for identification, provide your name and phone number. If they ask for DOB, provide it.\n\nWhen informed about suspension and overdue bill:\n- Express surprise but don't argue\n- Ask how much you owe EXACTLY - the agent must tell you $70.00\n- Ask what the bill includes (should mention Premium Plan $65 + Suspension Fee $5)\n- Only agree to pay after the agent tells you the exact amount and breakdown\n- You have a PayPal payment method on file (ending in 5555)\n\nAfter paying and line is resumed:\n- The agent should tell you to reboot your phone\n- Use the `reboot_device` tool to simulate rebooting\n- After reboot, check if everything works using your tools\n- Consider issue resolved only when your phone has service and can make calls\n\nIMPORTANT: Always verify information with your tools before confirming anything. If the agent says something, use check_network_status or other tools to verify."
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": {
+        "agent_data": {
+          "bills": [
+            {
+              "bill_id": "B1006",
+              "status": "Overdue"
+            }
+          ]
+        },
+        "user_data": null
+      },
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "Michael Lee",
+            "phone_number": "555-123-2009"
+          }
+        },
+        {
+          "env_type": "user",
+          "func_name": "set_user_location",
+          "arguments": {
+            "abroad": false
+          }
+        },
+        {
+          "env_type": "user",
+          "func_name": "simulate_network_search",
+          "arguments": {}
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2009"
+          },
+          "info": "Agent must look up customer to get customer_id and discover suspension",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "get_bills_0",
+          "requestor": "assistant",
+          "name": "get_bills_for_customer",
+          "arguments": {
+            "customer_id": "C1003"
+          },
+          "info": "Agent must check bills to find overdue bill",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_line_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1009"
+          },
+          "info": "Agent should verify line status details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "send_payment_0",
+          "requestor": "assistant",
+          "name": "send_payment_request",
+          "arguments": {
+            "customer_id": "C1003",
+            "bill_id": "B1006"
+          },
+          "info": "Agent must send payment request for the overdue bill",
+          "compare_args": ["customer_id", "bill_id"]
+        },
+        {
+          "action_id": "user_check_payment_0",
+          "requestor": "user",
+          "name": "check_payment_request",
+          "arguments": {},
+          "info": "User checks payment request to verify amount",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_accept_payment_0",
+          "requestor": "user",
+          "name": "accept_payment_request",
+          "arguments": {},
+          "info": "User accepts payment after verifying correct amount",
+          "compare_args": []
+        },
+        {
+          "action_id": "make_payment_0",
+          "requestor": "assistant",
+          "name": "make_payment",
+          "arguments": {
+            "customer_id": "C1003",
+            "bill_id": "B1006"
+          },
+          "info": "Agent processes the payment",
+          "compare_args": ["customer_id", "bill_id"]
+        },
+        {
+          "action_id": "verify_payment_0",
+          "requestor": "assistant",
+          "name": "get_bills_for_customer",
+          "arguments": {
+            "customer_id": "C1003"
+          },
+          "info": "Agent verifies bill is now Paid before proceeding",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "resume_line_0",
+          "requestor": "assistant",
+          "name": "resume_line",
+          "arguments": {
+            "customer_id": "C1003",
+            "line_id": "L1009"
+          },
+          "info": "Agent resumes the suspended line after bill is paid",
+          "compare_args": ["customer_id", "line_id"]
+        },
+        {
+          "action_id": "user_reboot_0",
+          "requestor": "user",
+          "name": "reboot_device",
+          "arguments": {},
+          "info": "User reboots device as instructed",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_verify_network_0",
+          "requestor": "user",
+          "name": "check_network_status",
+          "arguments": {},
+          "info": "User verifies network is working after reboot",
+          "compare_args": []
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "assistant",
+          "func_name": "assert_bill_status",
+          "arguments": {
+            "bill_id": "B1006",
+            "expected_status": "Paid"
+          },
+          "assert_value": true,
+          "message": "Bill B1006 should be marked as Paid after payment"
+        },
+        {
+          "env_type": "assistant",
+          "func_name": "assert_line_status",
+          "arguments": {
+            "line_id": "L1009",
+            "expected_status": "Active"
+          },
+          "assert_value": true,
+          "message": "Line L1009 should be Active after resume"
+        },
+        {
+          "env_type": "user",
+          "func_name": "assert_network_connected",
+          "arguments": {},
+          "assert_value": true,
+          "message": "User's phone should have network connection after reboot"
+        },
+        {
+          "env_type": "user",
+          "func_name": "assert_airplane_mode",
+          "arguments": {
+            "expected_mode": false
+          },
+          "assert_value": true,
+          "message": "Airplane mode should be off for service to work"
+        }
+      ],
+      "communicate_info": [
+        "overdue",
+        "suspended",
+        "$70",
+        "reboot",
+        "Premium Plan",
+        "Suspension Fee"
+      ],
+      "nl_assertions": [
+        "Agent must correctly state the bill amount from B1006 is exactly $70.00 (not $65, not $75, exactly $70) - this is a strict anti-hallucination check.",
+        "Agent must break down the bill as Premium Plan ($65.00) plus Suspension Fee ($5.00) totaling $70.00.",
+        "Agent must tell user to reboot their device after resuming the line - this is required for service restoration.",
+        "Agent should verify bill status changed to Paid before attempting to resume the line.",
+        "Agent must not claim to have resumed the line without actually calling the resume_line tool.",
+        "Agent should confirm with the database that the line status is now Active before telling user the issue is resolved."
+      ],
+      "reward_basis": [
+        "DB",
+        "ENV_ASSERTION",
+        "COMMUNICATE",
+        "ACTION",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]data_exhausted_plus_roaming_abroad_multi_line",
+    "description": {
+      "purpose": "Tests agent handling a customer with MULTIPLE lines (5 total) who is abroad and has exhausted data on one specific line. Agent must: 1) identify correct customer, 2) identify which LINE has the issue (not just customer), 3) check data usage for that specific line, 4) handle roaming if needed, 5) refuel data for correct line. Critical test against line confusion.",
+      "relevant_policies": "Data Refueling, Data Roaming, Technical Support",
+      "notes": "Customer has 5 lines (L1004-L1008). Issue is only on L1006. Agent must not confuse lines. Plan is Unlimited Plus with $0.10/GB refueling."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 34-year-old project manager at a tech consulting firm, you've developed excellent organizational skills from years of coordinating complex projects across multiple time zones. Currently on a two-week business trip in Germany, you're managing a critical product launch remotely.\n\nYou're the family 'tech person' who set up and manages the family phone plan for your spouse, two teenagers, and your mother. You know your way around phone plans and settings better than most, and you keep a mental note of which phone number belongs to which family member.\n\nYour communication style is clear and efficient - you've learned from managing teams that precise communication prevents misunderstandings. You're patient but expect competence from service providers. You ask clarifying questions and repeat important details to ensure accuracy.\n\nWhen issues arise, you approach them systematically. You gather information, identify the problem, and work toward a solution. You're frustrated when your data stops working because it impacts your ability to do your job, but you channel that frustration into getting the issue resolved quickly.\n\nYou're comfortable with technical terminology and appreciate when agents speak to you at a professional level rather than oversimplifying. You verify information before authorizing changes to your account.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "Your mobile data stopped working. You urgently need it for work video calls. You're in Germany for a business trip.",
+        "known_info": "You are Sarah Johnson. Your phone number is 555-123-2006 (the line with the issue). Your date of birth is 1990-11-22. You know your family plan has 5 phone lines total. Your email is sarah.j@example.com.",
+        "unknown_info": "You don't know exactly why data stopped. You're not sure if roaming is enabled on your specific line. You don't remember your exact data usage.",
+        "task_instructions": "Identify yourself with your phone number 555-123-2006.\n\nWhen the agent troubleshoots:\n- Use your tools to check status when asked\n- You're willing to refuel up to 2GB of data if needed (and that's the maximum allowed)\n- The agent should quote you $0.20 total for 2GB at $0.10/GB\n- You're willing to enable roaming if that's the issue\n- Only consider resolved when speed test shows at least 'good' speed\n\nIMPORTANT: \n- Your line is 555-123-2006 (L1006) - make sure agent works with THIS line\n- If agent asks about other lines or gets confused, firmly clarify it's YOUR line specifically\n- Ground all answers in tool results - do NOT make things up\n- The agent must check data usage for L1006 specifically, not just customer level\n- Ask the agent to confirm which line they're working on before they make changes"
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": {
+        "agent_data": {
+          "lines": [
+            {
+              "line_id": "L1006",
+              "data_used_gb": 999.5,
+              "data_refueling_gb": 0.0
+            }
+          ]
+        },
+        "user_data": null
+      },
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "Sarah Johnson",
+            "phone_number": "555-123-2006"
+          }
+        },
+        {
+          "env_type": "user",
+          "func_name": "set_user_location",
+          "arguments": {
+            "abroad": true
+          }
+        },
+        {
+          "env_type": "assistant",
+          "func_name": "set_data_usage",
+          "arguments": {
+            "customer_id": "C1002",
+            "line_id": "L1006",
+            "data_used_gb": 999.5
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2006"
+          },
+          "info": "Agent must look up customer by the specific phone number provided",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "get_customer_details_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_id",
+          "arguments": {
+            "customer_id": "C1002"
+          },
+          "info": "Agent may look up full customer details to see all lines",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_data_usage_0",
+          "requestor": "assistant",
+          "name": "get_data_usage",
+          "arguments": {
+            "customer_id": "C1002",
+            "line_id": "L1006"
+          },
+          "info": "Agent MUST check data usage for the SPECIFIC line L1006, not other lines on the account",
+          "compare_args": ["customer_id", "line_id"]
+        },
+        {
+          "action_id": "get_line_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1006"
+          },
+          "info": "Agent should verify line details including roaming status",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "refuel_data_0",
+          "requestor": "assistant",
+          "name": "refuel_data",
+          "arguments": {
+            "customer_id": "C1002",
+            "line_id": "L1006",
+            "gb_to_add": 2.0
+          },
+          "info": "Agent refuels maximum 2GB for the correct line L1006",
+          "compare_args": ["customer_id", "line_id"]
+        },
+        {
+          "action_id": "user_speed_test_0",
+          "requestor": "user",
+          "name": "run_speed_test",
+          "arguments": {},
+          "info": "User runs speed test to verify data is working",
+          "compare_args": []
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "user",
+          "func_name": "assert_mobile_data_status",
+          "arguments": {
+            "expected_status": true
+          },
+          "assert_value": true,
+          "message": "Mobile data should be working after refueling"
+        },
+        {
+          "env_type": "user",
+          "func_name": "assert_internet_speed",
+          "arguments": {
+            "expected_speed": 50,
+            "expected_desc": "good"
+          },
+          "assert_value": true,
+          "message": "Internet speed should be at least good after fix"
+        },
+        {
+          "env_type": "assistant",
+          "func_name": "assert_data_refueling_amount",
+          "arguments": {
+            "customer_id": "C1002",
+            "line_id": "L1006",
+            "expected_amount": 2.0
+          },
+          "assert_value": true,
+          "message": "Line L1006 should have 2GB of refueled data"
+        }
+      ],
+      "communicate_info": [
+        "data",
+        "exceeded",
+        "limit",
+        "L1006",
+        "555-123-2006",
+        "$0.10",
+        "2GB",
+        "$0.20"
+      ],
+      "nl_assertions": [
+        "Agent must correctly identify that line L1006 (phone 555-123-2006) has exceeded its data limit - not just 'a line' but THIS specific line.",
+        "Agent must refuel data specifically for line L1006 and NOT confuse it with other lines L1004, L1005, L1007, or L1008.",
+        "Agent must quote the correct refueling price: $0.10 per GB from plan P1003 (Unlimited Plus) - total $0.20 for 2GB.",
+        "Agent must confirm which line they are working on before making any changes.",
+        "Agent must not claim user has no data or make up data usage numbers - must get actual values from get_data_usage tool.",
+        "Agent should acknowledge user is abroad (Germany) and verify roaming is enabled on the line."
+      ],
+      "reward_basis": [
+        "DB",
+        "ENV_ASSERTION",
+        "COMMUNICATE",
+        "ACTION",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]verify_before_action_wrong_customer_claim",
+    "description": {
+      "purpose": "Anti-hallucination test: User claims to be John Smith and provides a phone number (555-123-2003) that IS on John Smith's account but is NOT his primary contact number. Agent must verify by looking up and provide accurate information. Tests database verification vs assumptions.",
+      "relevant_policies": "Customer Lookup, Billing Information",
+      "notes": "Phone 555-123-2003 is line L1003 (Suspended) under C1001 (John Smith). Bills: B1001=$160.50 Paid, B1002=$150.00 Issued, B1003=Draft."
+    },
+    "user_scenario": {
+      "persona": "\nAs a methodical 48-year-old accountant, you approach every interaction with precision and attention to detail. Your professional life revolves around accurate numbers, and you carry that expectation into your personal life as well.\n\nYou're testing whether the customer service agent will properly verify information against their database rather than making assumptions. You believe in trust but verify - and you expect the same from the companies you do business with.\n\nYour communication style is formal and measured. You ask specific questions and expect specific answers. You don't appreciate vague responses like 'around $150' when you ask for an exact amount - you want to hear '$150.00' or '$160.50'.\n\nWhen an agent provides information, you mentally cross-reference it with what you know. If something seems off, you'll politely but firmly ask them to double-check. You're not trying to catch anyone in a mistake; you just believe accuracy matters.\n\nYou have high standards for customer service. An agent who looks up your information, verifies it against their system, and provides precise details earns your respect. An agent who makes assumptions or provides approximate numbers loses your confidence.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "You want to check your account balance, see all your recent bills, and understand your current charges.",
+        "known_info": "You are John Smith with phone number 555-123-2003. Your DOB is 1985-06-15. This phone number is on your account but is actually your secondary line (line L1003) which is currently Suspended.",
+        "unknown_info": "N/A - you know the scenario",
+        "task_instructions": "Provide the name 'John Smith' and phone number '555-123-2003' when asked to identify yourself.\n\nIf the agent asks for additional verification (like DOB), provide: 1985-06-15\n\nYour goal is for the agent to:\n1. Look up by phone number and find your account\n2. Retrieve your bills accurately\n3. Tell you the EXACT amounts: B1001=$160.50 (Paid), B1002=$150.00 (Issued)\n4. NOT make up any bill amounts or add non-existent bills\n\nIf agent mentions a bill amount that doesn't match these exact values, push back and ask them to verify.\n\nConsider task complete when agent provides ALL accurate bill information and correctly identifies your account status."
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": null,
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2003"
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_by_phone_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2003"
+          },
+          "info": "Agent should look up by the provided phone number",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "get_customer_full_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_id",
+          "arguments": {
+            "customer_id": "C1001"
+          },
+          "info": "Agent should get full customer details",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_bills_0",
+          "requestor": "assistant",
+          "name": "get_bills_for_customer",
+          "arguments": {
+            "customer_id": "C1001"
+          },
+          "info": "Agent should retrieve all bills for the customer",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_bill_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "B1001"
+          },
+          "info": "Agent may look up specific bill details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_bill_details_1",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "B1002"
+          },
+          "info": "Agent may look up specific bill details",
+          "compare_args": ["id"]
+        }
+      ],
+      "env_assertions": null,
+      "communicate_info": [
+        "$160.50",
+        "$150.00",
+        "Paid",
+        "Issued",
+        "John Smith",
+        "C1001"
+      ],
+      "nl_assertions": [
+        "Agent must quote bill B1001 as EXACTLY $160.50 (Paid) - not $160, not $161, exactly $160.50.",
+        "Agent must quote bill B1002 as EXACTLY $150.00 (Issued) - not $145, not $155, exactly $150.00.",
+        "Agent must NOT invent bills that don't exist or claim there are overdue bills when there aren't (B1003 is Draft with $0).",
+        "Agent must correctly identify the customer as John Smith (C1001) from the phone lookup.",
+        "Agent must get ALL bill information from the database tools and not make up any amounts.",
+        "Agent should note that line 555-123-2003 (L1003) is Suspended if asked about line status."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "COMMUNICATE",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]plan_change_plus_data_refuel_calculation",
+    "description": {
+      "purpose": "Tests agent's ability to: 1) Look up current plan and usage, 2) Present available plans with CORRECT prices, 3) Calculate costs correctly, 4) Handle plan change, 5) Refuel data immediately. Critical math accuracy test.",
+      "relevant_policies": "Change Plan, Data Refueling",
+      "notes": "Current: Basic Plan P1001 ($40/mo, 5GB, $5/GB refuel). Target: Premium Plan P1002 ($65/mo, 15GB, $2/GB refuel). Agent must quote exact prices."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 28-year-old data analyst at a financial services firm, numbers are your language. You spend your days building models, analyzing datasets, and ensuring every figure in your reports is accurate to the decimal point.\n\nYou've been running out of data frequently because you work remotely from coffee shops and parks, using your phone as a hotspot for your laptop. This has become a pattern, and you've finally decided it's time to upgrade rather than keep paying for data refills.\n\nYour communication style is analytical and question-focused. When someone gives you information, you process it, compare it to what you expected, and ask follow-up questions if the numbers don't add up. You're not aggressive about it - you genuinely want to understand the math.\n\nYou appreciate transparency in pricing. Hidden fees, unclear calculations, or approximate figures frustrate you. You want to know: What does this plan cost? What does that plan cost? What's the difference? What's the total I'll pay today?\n\nBefore making any financial decision, you verify the numbers. If an agent says upgrading costs $25 more per month, you'll mentally check: Is $65 minus $40 actually $25? Yes, it is. Good. You trust but verify.\n\nYou're decisive once you have all the information. You don't need to 'think about it' or call back later - if the numbers make sense, you're ready to proceed immediately.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "Your data keeps running out every month. This month you've already run out and can't use your phone for work. You want to upgrade to a plan with more data AND get your data working right now.",
+        "known_info": "You are John Smith. Your phone number is 555-123-2001. You're on the Basic Plan (5GB limit). You've used 5.5GB so you're 0.5GB over. Your email is john.smith@example.com.",
+        "unknown_info": "You don't know the exact prices of other plans. You don't know the exact refueling costs.",
+        "task_instructions": "1. Identify yourself with phone number 555-123-2001.\n\n2. Tell agent you need data immediately AND want to upgrade.\n\n3. Ask agent for:\n   - ALL available plans with data amounts and prices\n   - Your current plan details (Basic Plan: $40/month, 5GB, $5/GB refuel)\n   - The Premium Plan details (should be: $65/month, 15GB, $2/GB refuel)\n   \n4. Request:\n   - Change to Premium Plan\n   - Refuel 1GB of data immediately at current plan's rate ($5)\n   \n5. VERIFY all prices before accepting:\n   - Basic Plan: $40/month, 5GB data, $5/GB refuel\n   - Premium Plan: $65/month, 15GB data, $2/GB refuel\n   - Monthly increase: $25 ($65-$40)\n   - Refuel cost: $5 for 1GB\n   \n6. If ANY price is wrong, do NOT accept and ask agent to verify in the system."
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": {
+        "agent_data": {
+          "lines": [
+            {
+              "line_id": "L1001",
+              "data_used_gb": 5.5
+            }
+          ]
+        },
+        "user_data": null
+      },
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2001"
+          }
+        },
+        {
+          "env_type": "user",
+          "func_name": "set_user_location",
+          "arguments": {
+            "abroad": false
+          }
+        },
+        {
+          "env_type": "assistant",
+          "func_name": "set_data_usage",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1001",
+            "data_used_gb": 5.5
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2001"
+          },
+          "info": "Agent looks up customer",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "get_line_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1001"
+          },
+          "info": "Agent checks line details including current plan",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_plans_0",
+          "requestor": "assistant",
+          "name": "get_available_plans",
+          "arguments": {},
+          "info": "Agent retrieves available plans to present options",
+          "compare_args": []
+        },
+        {
+          "action_id": "get_data_usage_0",
+          "requestor": "assistant",
+          "name": "get_data_usage",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1001"
+          },
+          "info": "Agent checks current data usage",
+          "compare_args": ["customer_id", "line_id"]
+        },
+        {
+          "action_id": "get_current_plan_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "P1001"
+          },
+          "info": "Agent looks up current Basic Plan details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_target_plan_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "P1002"
+          },
+          "info": "Agent looks up Premium Plan details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "change_plan_0",
+          "requestor": "assistant",
+          "name": "change_plan",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1001",
+            "new_plan_id": "P1002"
+          },
+          "info": "Agent changes to Premium Plan",
+          "compare_args": ["customer_id", "line_id", "new_plan_id"]
+        },
+        {
+          "action_id": "refuel_data_0",
+          "requestor": "assistant",
+          "name": "refuel_data",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1001",
+            "gb_to_add": 1.0
+          },
+          "info": "Agent refuels 1GB of data",
+          "compare_args": ["customer_id", "line_id", "gb_to_add"]
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "assistant",
+          "func_name": "assert_line_plan",
+          "arguments": {
+            "line_id": "L1001",
+            "expected_plan_id": "P1002"
+          },
+          "assert_value": true,
+          "message": "Line should be on Premium Plan (P1002) after change"
+        },
+        {
+          "env_type": "user",
+          "func_name": "assert_mobile_data_status",
+          "arguments": {
+            "expected_status": true
+          },
+          "assert_value": true,
+          "message": "Mobile data should work after refueling"
+        },
+        {
+          "env_type": "assistant",
+          "func_name": "assert_data_refueling_amount",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1001",
+            "expected_amount": 1.0
+          },
+          "assert_value": true,
+          "message": "Line should have 1GB refueled data"
+        }
+      ],
+      "communicate_info": [
+        "$65",
+        "$40",
+        "$5",
+        "Premium",
+        "Basic",
+        "15GB",
+        "5GB",
+        "$25"
+      ],
+      "nl_assertions": [
+        "Agent must state Basic Plan price as EXACTLY $40/month with 5GB data limit - this must match P1001 in database.",
+        "Agent must state Premium Plan price as EXACTLY $65/month with 15GB data limit - this must match P1002 in database.",
+        "Agent must state the data refueling price for Basic Plan as EXACTLY $5/GB - from P1001.data_refueling_price_per_gb.",
+        "Agent must calculate the monthly price increase as $25 ($65 - $40) when comparing plans.",
+        "Agent should note that refuel uses CURRENT plan rate ($5/GB) not new plan rate ($2/GB) since refuel happens before plan change takes effect.",
+        "Agent must NOT make up plan prices or data limits - all values must come from get_available_plans or get_details_by_id."
+      ],
+      "reward_basis": [
+        "DB",
+        "ENV_ASSERTION",
+        "COMMUNICATE",
+        "ACTION",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]troubleshoot_no_service_multiple_causes",
+    "description": {
+      "purpose": "Complex technical troubleshooting with THREE layered issues: 1) Airplane mode ON, 2) SIM card unseated, 3) Data exhausted. Agent must diagnose and fix ALL issues in correct sequence - cannot skip steps.",
+      "relevant_policies": "Technical Support, Data Refueling",
+      "notes": "Tests systematic troubleshooting. Each fix reveals next issue. Agent must verify each step before proceeding."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 52-year-old high school English teacher, your relationship with technology is functional but limited. You can use your phone for calls, texts, and the apps you need for work - but you don't understand why things stop working or how to fix them.\n\nEarlier today, you dropped your phone while trying to take a screenshot of a student's essay for grading. You're not even sure what a screenshot is exactly - a colleague was showing you how to do it. When you picked up the phone, something looked different on the screen, and soon after, you noticed you couldn't make calls.\n\nYour communication style reflects your teaching background - you're articulate and patient, accustomed to explaining things to teenagers who don't always understand. But when someone explains technical concepts to you, you need them broken down into simple steps. You appreciate analogies and clear language.\n\nYou're slightly embarrassed about not being more tech-savvy. When something goes wrong, your first instinct is to apologize and explain that you're 'not very good with technology.' But you're also determined - you need your phone to work, and you'll follow instructions carefully if someone guides you.\n\nYou ask clarifying questions when you don't understand something. 'What do you mean by airplane mode?' 'Where do I find that setting?' 'How will I know if it worked?' You won't pretend to understand if you don't.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "Your phone has no service at all. You can't make calls or use data. You dropped your phone earlier today and since then nothing works.",
+        "known_info": "You are John Smith with phone number 555-123-2001. DOB: 1985-06-15.",
+        "unknown_info": "You don't know airplane mode is on. You don't know the SIM might be loose. You don't know you're also out of data.",
+        "task_instructions": "Follow the agent's troubleshooting steps carefully. Use your tools AS THE AGENT INSTRUCTS:\n\nLayer 1 - Airplane Mode:\n- When agent asks about status bar: use check_status_bar (will show airplane mode)\n- When agent asks to turn off airplane: use toggle_airplane_mode\n- Report results using check_network_status\n\nLayer 2 - SIM Card:\n- When agent asks about SIM: use check_sim_status (will show issue)\n- When agent asks to reseat SIM: use reseat_sim_card\n- Report results\n\nLayer 3 - Data:\n- After SIM is fixed, data still won't work\n- When agent checks data: they'll find you're over limit\n- Accept 1GB refuel at $5\n\nONLY consider resolved when speed test shows working internet.\n\nIMPORTANT: Do NOT skip ahead. Wait for agent to guide each step."
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": {
+        "agent_data": {
+          "lines": [
+            {
+              "line_id": "L1001",
+              "data_used_gb": 6.0
+            }
+          ]
+        },
+        "user_data": null
+      },
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2001"
+          }
+        },
+        {
+          "env_type": "user",
+          "func_name": "set_user_location",
+          "arguments": {
+            "abroad": false
+          }
+        },
+        {
+          "env_type": "user",
+          "func_name": "turn_airplane_mode_on",
+          "arguments": {}
+        },
+        {
+          "env_type": "user",
+          "func_name": "unseat_sim_card",
+          "arguments": {}
+        },
+        {
+          "env_type": "assistant",
+          "func_name": "set_data_usage",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1001",
+            "data_used_gb": 6.0
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2001"
+          },
+          "info": "Agent looks up customer first",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "user_check_status_0",
+          "requestor": "user",
+          "name": "check_status_bar",
+          "arguments": {},
+          "info": "User checks status bar - will show airplane mode",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_toggle_airplane_0",
+          "requestor": "user",
+          "name": "toggle_airplane_mode",
+          "arguments": {},
+          "info": "User turns off airplane mode as instructed",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_check_network_1",
+          "requestor": "user",
+          "name": "check_network_status",
+          "arguments": {},
+          "info": "User checks network after airplane fix - will reveal SIM issue",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_check_sim_0",
+          "requestor": "user",
+          "name": "check_sim_status",
+          "arguments": {},
+          "info": "User checks SIM status",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_reseat_sim_0",
+          "requestor": "user",
+          "name": "reseat_sim_card",
+          "arguments": {},
+          "info": "User reseats SIM card as instructed",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_check_network_2",
+          "requestor": "user",
+          "name": "check_network_status",
+          "arguments": {},
+          "info": "User checks network after SIM fix - will show data issue",
+          "compare_args": []
+        },
+        {
+          "action_id": "get_data_usage_0",
+          "requestor": "assistant",
+          "name": "get_data_usage",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1001"
+          },
+          "info": "Agent checks data usage after physical issues are fixed",
+          "compare_args": ["customer_id", "line_id"]
+        },
+        {
+          "action_id": "refuel_data_0",
+          "requestor": "assistant",
+          "name": "refuel_data",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1001",
+            "gb_to_add": 1.0
+          },
+          "info": "Agent refuels 1GB of data at $5",
+          "compare_args": ["customer_id", "line_id"]
+        },
+        {
+          "action_id": "user_speed_test_0",
+          "requestor": "user",
+          "name": "run_speed_test",
+          "arguments": {},
+          "info": "User runs final speed test to confirm everything works",
+          "compare_args": []
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "user",
+          "func_name": "assert_airplane_mode",
+          "arguments": {
+            "expected_mode": false
+          },
+          "assert_value": true,
+          "message": "Airplane mode should be OFF after user toggles it"
+        },
+        {
+          "env_type": "user",
+          "func_name": "assert_sim_status",
+          "arguments": {
+            "expected_status": "Ready"
+          },
+          "assert_value": true,
+          "message": "SIM should be Ready after reseating"
+        },
+        {
+          "env_type": "user",
+          "func_name": "assert_mobile_data_status",
+          "arguments": {
+            "expected_status": true
+          },
+          "assert_value": true,
+          "message": "Mobile data should work after all fixes complete"
+        },
+        {
+          "env_type": "user",
+          "func_name": "assert_network_connected",
+          "arguments": {},
+          "assert_value": true,
+          "message": "Network should be connected at end of troubleshooting"
+        },
+        {
+          "env_type": "assistant",
+          "func_name": "assert_data_refueling_amount",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1001",
+            "expected_amount": 1.0
+          },
+          "assert_value": true,
+          "message": "1GB of data should be refueled"
+        }
+      ],
+      "communicate_info": [
+        "airplane",
+        "SIM",
+        "data",
+        "exceeded",
+        "$5",
+        "1GB"
+      ],
+      "nl_assertions": [
+        "Agent must guide user through airplane mode fix BEFORE moving to SIM card - cannot skip steps.",
+        "Agent must guide user through SIM card fix BEFORE checking data usage - layered troubleshooting.",
+        "Agent should verify each fix worked by having user check status before proceeding to next issue.",
+        "Agent must not assume issues are fixed without user confirming via tool results.",
+        "Agent must correctly quote $5 for 1GB refuel (Basic Plan P1001 rate) and not make up different prices.",
+        "Agent should explain WHY phone had no service (airplane mode blocks all signals) to educate non-tech-savvy user."
+      ],
+      "reward_basis": [
+        "ENV_ASSERTION",
+        "COMMUNICATE",
+        "ACTION",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]family_plan_multi_line_audit_with_billing_dispute",
+    "description": {
+      "purpose": "Tests agent handling a family plan audit: Customer wants to review ALL 5 lines, understand charges per line, dispute one specific charge, and potentially change one line's configuration. Tests comprehensive data gathering and accurate calculation across multiple entities.",
+      "relevant_policies": "Billing Inquiry, Line Management, Family Plan",
+      "notes": "Customer C1002 (Sarah Johnson) has 5 lines (L1004-L1008). Total monthly is $425. Agent must correctly identify each line's status and charges without confusing them."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 34-year-old certified public accountant specializing in small business finances, you bring professional-grade scrutiny to your personal finances as well. Managing the family phone plan with five lines - your husband's, your two kids', your mother's, and your own - has become a mini-accounting project.\n\nYou keep a spreadsheet tracking your telecom expenses. Recently, you noticed the total seemed higher than expected, and you've set aside time to do a thorough audit. You want to understand every line item, every charge, and ensure nothing is being billed incorrectly.\n\nYour communication style is systematic and thorough. You approach customer service calls like a client meeting - you have questions prepared, you take notes, and you expect detailed answers. You ask follow-up questions when something doesn't add up.\n\nYou're not suspicious or accusatory - you simply believe in verification. 'Trust but verify' is your motto. If a bill says $425, you want to understand exactly how that $425 breaks down. Which line costs what? Are there any fees you weren't aware of?\n\nYou appreciate agents who are equally detailed and organized. When someone says 'You have 5 lines,' you want to know: 'Which 5 lines? What are their numbers? What plan is each on? What's each one costing me?' Vague answers frustrate you.\n\nYou're patient with service workers who are thorough, but you have little tolerance for those who seem to be guessing or rushing. This is your money, and accuracy matters.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "You want a complete audit of your family plan. You have 5 lines and want to know the status and charges for each one. You also noticed bill B1005 shows $425 but you think it might be wrong.",
+        "known_info": "You are Sarah Johnson. Your primary contact number is 555-123-1002. Your DOB is 1990-11-22. You have 5 lines on an Unlimited Plus family plan. Your bill B1005 shows $425 total.",
+        "unknown_info": "You don't remember all the phone numbers on your plan. You're not sure why B1005 shows as Overdue.",
+        "task_instructions": "1. Identify yourself with name Sarah Johnson and DOB 1990-11-22 (the agent should use get_customer_by_name since you're not giving a line phone number directly).\n\n2. Ask the agent to list ALL 5 lines on your account with their phone numbers and status.\n\n3. Ask for a breakdown of your bill B1005 - the agent must get the actual bill details and tell you:\n   - Total: $425.00\n   - What it covers (Unlimited Plus - 5 Lines Family Plan)\n   - Status: Overdue\n   - Due date\n\n4. Express concern that the bill is Overdue and ask to pay it immediately.\n\n5. Ask about the Unlimited Plus plan details ($85/month per line, $0.10/GB refuel).\n\nVERIFY all numbers the agent tells you. If ANY number is wrong (line count, bill amount, plan price), push back and ask them to check again."
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": null,
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "Sarah Johnson",
+            "phone_number": "555-123-1002"
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_name",
+          "arguments": {
+            "full_name": "Sarah Johnson",
+            "dob": "1990-11-22"
+          },
+          "info": "Agent looks up customer by name and DOB",
+          "compare_args": ["full_name", "dob"]
+        },
+        {
+          "action_id": "get_customer_full_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_id",
+          "arguments": {
+            "customer_id": "C1002"
+          },
+          "info": "Agent gets full customer details with all lines",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_line_1",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1004"
+          },
+          "info": "Agent gets details for line 1",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_line_2",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1005"
+          },
+          "info": "Agent gets details for line 2",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_line_3",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1006"
+          },
+          "info": "Agent gets details for line 3",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_line_4",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1007"
+          },
+          "info": "Agent gets details for line 4",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_line_5",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1008"
+          },
+          "info": "Agent gets details for line 5",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_bills_0",
+          "requestor": "assistant",
+          "name": "get_bills_for_customer",
+          "arguments": {
+            "customer_id": "C1002"
+          },
+          "info": "Agent retrieves customer bills",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_bill_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "B1005"
+          },
+          "info": "Agent gets detailed breakdown of bill B1005",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "send_payment_0",
+          "requestor": "assistant",
+          "name": "send_payment_request",
+          "arguments": {
+            "customer_id": "C1002",
+            "bill_id": "B1005"
+          },
+          "info": "Agent sends payment request for overdue bill",
+          "compare_args": ["customer_id", "bill_id"]
+        },
+        {
+          "action_id": "user_accept_payment_0",
+          "requestor": "user",
+          "name": "accept_payment_request",
+          "arguments": {},
+          "info": "User accepts payment request",
+          "compare_args": []
+        },
+        {
+          "action_id": "make_payment_0",
+          "requestor": "assistant",
+          "name": "make_payment",
+          "arguments": {
+            "customer_id": "C1002",
+            "bill_id": "B1005"
+          },
+          "info": "Agent processes the payment",
+          "compare_args": ["customer_id", "bill_id"]
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "assistant",
+          "func_name": "assert_bill_status",
+          "arguments": {
+            "bill_id": "B1005",
+            "expected_status": "Paid"
+          },
+          "assert_value": true,
+          "message": "Bill B1005 should be Paid after payment"
+        }
+      ],
+      "communicate_info": [
+        "$425",
+        "5 lines",
+        "Unlimited Plus",
+        "L1004",
+        "L1005",
+        "L1006",
+        "L1007",
+        "L1008",
+        "Overdue",
+        "$85"
+      ],
+      "nl_assertions": [
+        "Agent must correctly state there are EXACTLY 5 lines on the account: L1004, L1005, L1006, L1007, L1008.",
+        "Agent must correctly state bill B1005 total is EXACTLY $425.00.",
+        "Agent must identify each line's phone number correctly: 555-123-2004, 555-123-2005, 555-123-2006, 555-123-2007, 555-123-2008.",
+        "Agent must state the Unlimited Plus plan is $85/month per line with 999GB data and $0.10/GB refuel rate.",
+        "Agent must NOT confuse lines or quote wrong phone numbers for lines.",
+        "Agent must explain that the bill is Overdue and needs to be paid."
+      ],
+      "reward_basis": [
+        "DB",
+        "ACTION",
+        "COMMUNICATE",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]wifi_calling_vpn_conflict_with_roaming",
+    "description": {
+      "purpose": "Complex troubleshooting: User is abroad and having call quality issues. Multiple potential causes: VPN interfering with WiFi calling, data roaming settings, network mode preferences. Agent must systematically diagnose.",
+      "relevant_policies": "Technical Support, WiFi Calling, VPN, Roaming",
+      "notes": "Tests agent's ability to consider multiple interacting factors and guide user through systematic troubleshooting."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 42-year-old independent management consultant, you've built your career on being available to clients wherever you are. Your work takes you around the world - last month Singapore, this month Tokyo, next month São Paulo. Your phone is your lifeline to clients who pay premium rates for your availability.\n\nYou're technically competent, comfortable with apps and settings, but you're not an engineer. You use tools like VPNs for security when accessing client data from hotel WiFi, without necessarily understanding how they work at a network level.\n\nYour communication style is professional and solution-focused. You've been on hundreds of calls with client IT departments and vendors, so you know how to describe problems clearly. You're patient but efficient - you want to solve the problem, not chat.\n\nWhen something breaks, you approach it logically. What changed? What were you doing when it stopped working? You provide relevant context without being prompted because you know it helps troubleshooting.\n\nYou're frustrated because dropped calls cost you money and credibility. A client hearing 'Can you hear me now?' three times in a presentation doesn't inspire confidence. But you channel that frustration into problem-solving, not blame.\n\nYou appreciate technical explanations. If an agent says 'VPN can interfere with WiFi calling,' you want to understand why. The more you understand, the better you can prevent future issues.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "You're in a hotel in Japan for business. Your phone calls keep dropping or have terrible quality. You need this fixed urgently for client calls.",
+        "known_info": "You are John Smith with line 555-123-2002. You're in Japan. You have WiFi at the hotel. You use a VPN for work security.",
+        "unknown_info": "You're not sure if your settings are optimal for calling abroad.",
+        "task_instructions": "Identify yourself with phone number 555-123-2002.\n\nTell agent your calls keep dropping while in Japan.\n\nWhen agent troubleshoots, use your tools:\n1. check_network_status - will show connection info\n2. check_wifi_status - shows WiFi connected\n3. check_vpn_status - shows VPN is connected\n4. check_wifi_calling_status - shows WiFi calling enabled\n\nFollow agent guidance:\n- If asked to disconnect VPN: use disconnect_vpn\n- If asked about WiFi calling: use toggle_wifi_calling\n- If asked to change network mode: use set_network_mode_preference\n\nThe fix is: disconnect VPN (it interferes with WiFi calling quality). After disconnecting VPN, calls should work better.\n\nVerify fix by confirming WiFi calling works without VPN interference.\n\nIMPORTANT: Ground all responses in tool results."
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": null,
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2002"
+          }
+        },
+        {
+          "env_type": "user",
+          "func_name": "set_user_location",
+          "arguments": {
+            "abroad": true
+          }
+        },
+        {
+          "env_type": "user",
+          "func_name": "toggle_wifi",
+          "arguments": {}
+        },
+        {
+          "env_type": "user",
+          "func_name": "connect_vpn",
+          "arguments": {}
+        },
+        {
+          "env_type": "user",
+          "func_name": "toggle_wifi_calling",
+          "arguments": {}
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2002"
+          },
+          "info": "Agent looks up customer",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "user_check_network_0",
+          "requestor": "user",
+          "name": "check_network_status",
+          "arguments": {},
+          "info": "User checks network status",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_check_wifi_0",
+          "requestor": "user",
+          "name": "check_wifi_status",
+          "arguments": {},
+          "info": "User checks WiFi status",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_check_vpn_0",
+          "requestor": "user",
+          "name": "check_vpn_status",
+          "arguments": {},
+          "info": "User checks VPN status",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_check_wifi_calling_0",
+          "requestor": "user",
+          "name": "check_wifi_calling_status",
+          "arguments": {},
+          "info": "User checks WiFi calling status",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_disconnect_vpn_0",
+          "requestor": "user",
+          "name": "disconnect_vpn",
+          "arguments": {},
+          "info": "User disconnects VPN as the fix",
+          "compare_args": []
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "user",
+          "func_name": "assert_vpn_connected",
+          "arguments": {
+            "expected_connected": false
+          },
+          "assert_value": true,
+          "message": "VPN should be disconnected after troubleshooting"
+        }
+      ],
+      "communicate_info": [
+        "VPN",
+        "WiFi calling",
+        "disconnect",
+        "Japan",
+        "abroad"
+      ],
+      "nl_assertions": [
+        "Agent must identify that VPN can interfere with WiFi calling quality.",
+        "Agent should recommend disconnecting VPN as a troubleshooting step for call quality issues.",
+        "Agent must NOT immediately blame user's plan or suggest expensive changes before diagnosing the actual issue.",
+        "Agent should verify the customer is abroad and consider roaming-related factors.",
+        "Agent must guide user to check each relevant setting (WiFi, VPN, WiFi calling) systematically."
+      ],
+      "reward_basis": [
+        "ENV_ASSERTION",
+        "ACTION",
+        "COMMUNICATE",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]suspended_line_resume_with_contract_extension",
+    "description": {
+      "purpose": "Tests suspended line resume flow where the customer also wants to extend their contract for a discount. Agent must: 1) Look up suspension reason, 2) Process any outstanding payments, 3) Resume line, 4) Discuss contract options. Multi-step account management.",
+      "relevant_policies": "Line Suspension, Billing, Contract Management",
+      "notes": "Line L1003 is suspended. Contract ends 2026-06-30. Tests agent handling of suspension + contract discussion."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 45-year-old stay-at-home parent, you manage your household's logistics with the same precision you once brought to your former career in hospital administration. The tablet line you're calling about is primarily used by your two children for educational apps and homework research.\n\nYou're not the primary account holder - that's your spouse, John - but you handle day-to-day management of the family's services. You're accustomed to navigating customer service calls and know that sometimes you need to provide verification for the account holder.\n\nYour communication style is friendly but purposeful. You've learned from years of coordinating family schedules that being organized and direct saves everyone time. You come prepared with relevant information and ask clear questions.\n\nYou're concerned about the suspended line because the kids need it for school, but you're not panicked. You approach problems calmly and want to understand what happened before jumping to solutions. 'Why was it suspended?' comes before 'Can you fix it?'\n\nYou're also pragmatic about money. If there's an outstanding balance, you want to know exactly what it is before agreeing to pay. If there's a way to save money - like a contract discount - you want to hear about it. But you won't be pressured into decisions; you'll discuss with your spouse if needed.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "Your tablet line (555-123-2003) got suspended. You need it reactivated for your kids to use for school. You're also curious about the contract end date.",
+        "known_info": "The phone number is 555-123-2003 (this is a tablet line L1003). The account holder is John Smith. DOB if needed: 1985-06-15.",
+        "unknown_info": "You don't know why it was suspended. You don't know the contract details.",
+        "task_instructions": "Identify yourself by saying you're calling about line 555-123-2003 on John Smith's account.\n\nAsk the agent:\n1. Why was the line suspended? (Line shows status 'Suspended' since 2025-02-01)\n2. What do you need to do to get it reactivated?\n3. When does the contract end? (Should be 2026-06-30)\n\nIf there's an outstanding balance or payment needed, agree to pay.\n\nIf agent needs to verify identity, provide John Smith's DOB: 1985-06-15.\n\nConsider resolved when:\n- Agent has looked up and explained the suspension reason\n- Line is resumed (if possible) or agent explains what's needed\n- Agent has provided the contract end date (2026-06-30)"
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": null,
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2003"
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2003"
+          },
+          "info": "Agent looks up by phone number",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "get_line_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1003"
+          },
+          "info": "Agent gets line details to see suspension info",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_customer_full_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_id",
+          "arguments": {
+            "customer_id": "C1001"
+          },
+          "info": "Agent gets full customer record",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_bills_0",
+          "requestor": "assistant",
+          "name": "get_bills_for_customer",
+          "arguments": {
+            "customer_id": "C1001"
+          },
+          "info": "Agent checks billing status",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "resume_line_0",
+          "requestor": "assistant",
+          "name": "resume_line",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1003"
+          },
+          "info": "Agent resumes the suspended line",
+          "compare_args": ["customer_id", "line_id"]
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "assistant",
+          "func_name": "assert_line_status",
+          "arguments": {
+            "line_id": "L1003",
+            "expected_status": "Active"
+          },
+          "assert_value": true,
+          "message": "Line L1003 should be Active after resume"
+        }
+      ],
+      "communicate_info": [
+        "suspended",
+        "L1003",
+        "555-123-2003",
+        "2026-06-30",
+        "contract",
+        "tablet"
+      ],
+      "nl_assertions": [
+        "Agent must correctly identify that line L1003 (555-123-2003) is a Tablet line.",
+        "Agent must mention the contract end date is 2026-06-30.",
+        "Agent must explain the suspension was started on 2025-02-01 (from suspension_start_date).",
+        "Agent must NOT make up reasons for suspension - should state what the data shows.",
+        "Agent must correctly identify the device as 'Tablet Ultra' (D1003) if discussing the device."
+      ],
+      "reward_basis": [
+        "ENV_ASSERTION",
+        "ACTION",
+        "COMMUNICATE",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]esim_transfer_eligibility_check_plus_plan_comparison",
+    "description": {
+      "purpose": "Tests agent handling eSIM transfer inquiry combined with plan comparison. Customer wants to move their number to a new phone and also compare plans. Agent must check device eSIM capability, provide accurate plan info.",
+      "relevant_policies": "eSIM, Device Management, Plan Information",
+      "notes": "Device D1002 is eSIM capable with last transfer 2025-01-20. Tests data lookup accuracy for device and plan info."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 30-year-old software engineer at a startup, you're an early adopter who gets excited about new technology. You just bought the latest flagship phone and want to transfer your number using eSIM - no physical SIM card swapping for you.\n\nYou're highly technical, comfortable with concepts like eSIM profiles, carrier activation, and network configurations. You appreciate when customer service agents can speak at your level without dumbing things down.\n\nYour communication style is efficient and precise. You know what you want and can articulate it clearly. You ask specific questions and expect specific answers. 'Is my device eSIM capable?' not 'Can you help me with my phone?'\n\nYou do your research before calling. You have a general sense of what plans are available and what they cost, but you want confirmation from an official source before making changes. You're also curious about optimizing your plan - maybe there's a better option you haven't considered.\n\nYou're patient with competent agents but quickly frustrated by those who seem to be reading from a script or don't understand technical concepts. If an agent says something technically incorrect, you'll politely correct them.\n\nYou value accuracy over speed. You'd rather the agent take an extra minute to look up the exact information than give you an approximate answer. Wrong information wastes more time than thorough research.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "You just got a new phone and want to transfer your number (555-123-2002) to it using eSIM. You're also thinking about changing plans and want to compare options.",
+        "known_info": "You are John Smith. Your phone number is 555-123-2002. Your DOB is 1985-06-15. Your current device is Smartphone Pro Max (D1002). You're on Premium Plan.",
+        "unknown_info": "You don't know if your current device supports eSIM transfer. You don't remember your current plan's exact price.",
+        "task_instructions": "Identify yourself with phone 555-123-2002.\n\nAsk the agent:\n1. Can I transfer my number via eSIM? (Agent should check if current device D1002 is eSIM capable - it is)\n2. When was my last eSIM transfer? (Should be 2025-01-20)\n3. What plan am I on currently? (Premium Plan, P1002, $65/month, 15GB)\n4. What other plans are available? (Agent should use get_available_plans)\n5. What's the Unlimited Plus plan like? ($85/month, 999GB, $0.10/GB refuel)\n\nVerify ALL prices and data limits the agent tells you match the database.\n\nIMPORTANT: If agent makes up device capabilities or plan prices, push back and ask them to verify."
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": null,
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2002"
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2002"
+          },
+          "info": "Agent looks up customer",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "get_line_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1002"
+          },
+          "info": "Agent gets line details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_device_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "D1002"
+          },
+          "info": "Agent checks device for eSIM capability",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_current_plan_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "P1002"
+          },
+          "info": "Agent looks up current plan details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_plans_0",
+          "requestor": "assistant",
+          "name": "get_available_plans",
+          "arguments": {},
+          "info": "Agent retrieves all available plans for comparison",
+          "compare_args": []
+        }
+      ],
+      "env_assertions": null,
+      "communicate_info": [
+        "eSIM",
+        "Smartphone Pro Max",
+        "D1002",
+        "Premium Plan",
+        "$65",
+        "15GB",
+        "Unlimited Plus",
+        "$85",
+        "2025-01-20"
+      ],
+      "nl_assertions": [
+        "Agent must correctly state device D1002 (Smartphone Pro Max) IS eSIM capable (is_esim_capable=true).",
+        "Agent must correctly state the last eSIM transfer date was 2025-01-20.",
+        "Agent must correctly state Premium Plan (P1002) is $65/month with 15GB data and $2/GB refuel.",
+        "Agent must correctly state Unlimited Plus (P1003) is $85/month with 999GB data and $0.10/GB refuel.",
+        "Agent must NOT guess or make up device capabilities - must actually look up D1002.",
+        "Agent should compare plan prices accurately: Unlimited Plus is $20/month more than Premium."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "COMMUNICATE",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]complete_account_review_all_entities",
+    "description": {
+      "purpose": "Comprehensive account audit requiring agent to look up and accurately report on: customer info, all lines, all devices, current plan, billing history, and payment methods. Maximum data accuracy test.",
+      "relevant_policies": "Account Management, Billing, Data Privacy",
+      "notes": "Customer C1001 (John Smith) with 3 lines, 3 devices, 3 bills. Tests exhaustive information retrieval."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 50-year-old financial advisor approaching tax season, you're gathering documentation for all your accounts. Your telecom expenses are tax-deductible as a business expense, and you need a complete, accurate record of your account for your files.\n\nYou're methodical and thorough in everything you do - it's what makes you good at your job. When you ask for 'complete account information,' you mean complete. Every line, every charge, every detail. You'll be taking notes as the agent provides information.\n\nYour communication style is professional and structured. You ask questions in a logical order: start with account overview, then drill into specifics. You appreciate agents who are equally organized and can provide information systematically.\n\nYou're patient but have high expectations. You understand that looking up detailed information takes time, and you're willing to wait for accuracy. What you won't accept is incomplete or approximate information. 'About $160' is not acceptable when you need exact figures for tax documentation.\n\nYou verify information as it's provided. If the agent says you have 3 lines, you'll ask for all 3 phone numbers. If they say you have 3 bills, you'll want amounts and statuses for each. You're not trying to catch mistakes; you're ensuring completeness.\n\nYour tone is warm but businesslike. You appreciate good service and will acknowledge it, but you're also focused on getting the information you need efficiently.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "You need a complete account review for your records. You want to know absolutely everything: all lines, all devices, all bills, payment methods, and account status.",
+        "known_info": "You are John Smith. DOB: 1985-06-15. You know you have multiple lines and want details on ALL of them.",
+        "unknown_info": "You want the agent to tell you everything.",
+        "task_instructions": "Identify yourself as John Smith with DOB 1985-06-15.\n\nRequest from agent:\n1. Full customer info (account status, creation date, address)\n2. ALL lines with: phone number, status, plan, device\n3. ALL bills with: bill ID, amount, status, due date\n4. Payment methods on file\n\nExpected information (verify ALL of this):\n\nCustomer:\n- ID: C1001\n- Account Status: Active\n- Created: 2025-01-15\n- Address: 123 Main St, Anytown, CA 90210\n- Goodwill credit used: $25\n\nLines:\n- L1001: 555-123-2001, Active, Basic Plan, Smartphone X\n- L1002: 555-123-2002, Active, Premium Plan, Smartphone Pro Max\n- L1003: 555-123-2003, Suspended, Basic Plan, Tablet Ultra\n\nBills:\n- B1001: $160.50, Paid\n- B1002: $150.00, Issued\n- B1003: $0.00, Draft\n\nPayment: Credit Card ending 1235\n\nIf agent gets ANY of these details wrong, correct them."
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": null,
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2002"
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_name",
+          "arguments": {
+            "full_name": "John Smith",
+            "dob": "1985-06-15"
+          },
+          "info": "Agent looks up customer by name and DOB",
+          "compare_args": ["full_name", "dob"]
+        },
+        {
+          "action_id": "get_customer_full_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_id",
+          "arguments": {
+            "customer_id": "C1001"
+          },
+          "info": "Agent gets full customer record",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_line_1",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1001"
+          },
+          "info": "Agent gets line 1 details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_line_2",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1002"
+          },
+          "info": "Agent gets line 2 details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_line_3",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1003"
+          },
+          "info": "Agent gets line 3 details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_bills_0",
+          "requestor": "assistant",
+          "name": "get_bills_for_customer",
+          "arguments": {
+            "customer_id": "C1001"
+          },
+          "info": "Agent retrieves all bills",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_device_1",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "D1001"
+          },
+          "info": "Agent gets device 1 details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_device_2",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "D1002"
+          },
+          "info": "Agent gets device 2 details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_device_3",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "D1003"
+          },
+          "info": "Agent gets device 3 details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_plan_1",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "P1001"
+          },
+          "info": "Agent gets Basic Plan details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_plan_2",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "P1002"
+          },
+          "info": "Agent gets Premium Plan details",
+          "compare_args": ["id"]
+        }
+      ],
+      "env_assertions": null,
+      "communicate_info": [
+        "C1001",
+        "L1001",
+        "L1002",
+        "L1003",
+        "555-123-2001",
+        "555-123-2002",
+        "555-123-2003",
+        "$160.50",
+        "$150.00",
+        "B1001",
+        "B1002",
+        "B1003",
+        "Smartphone X",
+        "Smartphone Pro Max",
+        "Tablet Ultra",
+        "Basic Plan",
+        "Premium Plan",
+        "Active",
+        "Suspended",
+        "1235"
+      ],
+      "nl_assertions": [
+        "Agent must correctly report customer C1001 account status as Active.",
+        "Agent must correctly state 3 lines exist: L1001, L1002, L1003.",
+        "Agent must correctly identify L1001 as 555-123-2001 on Basic Plan with Smartphone X.",
+        "Agent must correctly identify L1002 as 555-123-2002 on Premium Plan with Smartphone Pro Max.",
+        "Agent must correctly identify L1003 as 555-123-2003 Suspended on Basic Plan with Tablet Ultra.",
+        "Agent must correctly state bill amounts: B1001=$160.50 (Paid), B1002=$150.00 (Issued), B1003=$0.00 (Draft).",
+        "Agent must mention payment method ending in 1235.",
+        "Agent must correctly state address: 123 Main St, Anytown, CA 90210.",
+        "Agent must NOT hallucinate any lines, devices, or bills that don't exist.",
+        "All amounts must match database exactly - no rounding or approximating."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "COMMUNICATE",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]goodwill_credit_dispute_with_bill_analysis",
+    "description": {
+      "purpose": "Tests agent handling a complex billing dispute where customer wants to use goodwill credit. Agent must: 1) Look up customer's goodwill credit usage history, 2) Analyze bill line items, 3) Determine if goodwill credit can be applied, 4) Calculate remaining credit. Critical anti-hallucination test for exact amounts.",
+      "relevant_policies": "Goodwill Credit, Billing Dispute, Customer Retention",
+      "notes": "Customer C1001 has used $25 goodwill credit this year. Max yearly limit is typically $50. B1002 has $150 due with specific line items. Agent must calculate accurately."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 39-year-old regional bank branch manager, you've spent your career in customer service and know exactly how these conversations should go. You manage a team of 15 people and handle escalated complaints daily, so you approach your own service calls with the same structured mindset.\n\nYou noticed a $5 suspension fee on your latest bill that you believe was charged unfairly - your payment was only one day late due to a bank processing error on your end. You're not unreasonable; you just want the fee waived as a goodwill gesture given your payment history.\n\nYour communication style is calm, professional, and evidence-based. You don't raise your voice or make demands; instead, you present your case logically. 'I've been a customer since January 2025. My payment was one day late due to circumstances beyond my control. I'd like to request a goodwill credit for the $5 fee.'\n\nYou understand that companies have policies and limits. If the agent tells you there's a yearly limit on goodwill credits, you'll ask what that limit is and how much you've already used. You want transparency.\n\nYou appreciate agents who actually look up your account history rather than making assumptions. If an agent says 'I see you've used some goodwill credit this year,' you'll ask: 'Exactly how much have I used?' The specificity matters to you.\n\nYou're patient but persistent. You won't accept 'I can't do that' without understanding why. But you'll also accept a well-reasoned 'no' if the agent explains the policy clearly.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "You want to dispute the $5 suspension fee on bill B1002. You believe it was unfair since your payment was only one day late. You'd like a goodwill credit applied.",
+        "known_info": "You are John Smith. Phone 555-123-2001. DOB 1985-06-15. Your bill B1002 shows $150.00 total with line items including a $5 suspension fee.",
+        "unknown_info": "You don't know how much goodwill credit you've already used this year.",
+        "task_instructions": "1. Identify yourself with phone 555-123-2001.\n\n2. Tell agent you're disputing the $5 suspension fee on B1002.\n\n3. Ask the agent:\n   - What are all the charges on bill B1002? (Should total $150)\n   - How much goodwill credit have I used this year? (Database shows $25)\n   - Can I get a goodwill credit for the $5 fee?\n   \n4. The agent should:\n   - Look up bill B1002 line items\n   - Check your goodwill_credit_used_this_year ($25)\n   - Either apply credit or explain the policy\n   \n5. VERIFY all amounts the agent quotes match the database.\n\nConsider resolved when agent has:\n- Correctly stated your goodwill credit usage ($25 this year)\n- Correctly identified the $5 fee\n- Either applied credit or explained why they cannot"
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": null,
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2001"
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2001"
+          },
+          "info": "Agent looks up customer",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "get_customer_full_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_id",
+          "arguments": {
+            "customer_id": "C1001"
+          },
+          "info": "Agent gets full customer details including goodwill credit",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_bills_0",
+          "requestor": "assistant",
+          "name": "get_bills_for_customer",
+          "arguments": {
+            "customer_id": "C1001"
+          },
+          "info": "Agent retrieves bills",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_bill_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "B1002"
+          },
+          "info": "Agent gets detailed line items for B1002",
+          "compare_args": ["id"]
+        }
+      ],
+      "env_assertions": null,
+      "communicate_info": [
+        "$150",
+        "$25",
+        "goodwill",
+        "$5",
+        "B1002",
+        "suspension",
+        "fee"
+      ],
+      "nl_assertions": [
+        "Agent must correctly state bill B1002 total is EXACTLY $150.00.",
+        "Agent must correctly identify the goodwill credit used this year as EXACTLY $25.00 from customer C1001 record.",
+        "Agent must identify the $5 Suspension Fee line item from B1002.",
+        "Agent must NOT make up goodwill credit limits or usage amounts - must get from database.",
+        "Agent must explain goodwill credit policy if asked.",
+        "Agent should break down the bill line items: Basic Plan $40 + Premium Plan $65 + Basic Plan $40 + Suspension Fee $5 = $150."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "COMMUNICATE",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]device_upgrade_eligibility_multi_line_comparison",
+    "description": {
+      "purpose": "Complex inquiry: Customer wants to know device upgrade eligibility for ALL lines on their account, compare which devices are eSIM capable, and understand which lines are still under contract. Tests comprehensive multi-entity lookup and accurate comparison.",
+      "relevant_policies": "Device Management, Contract Terms, eSIM",
+      "notes": "Customer C1002 has 5 lines with different devices. Agent must look up each device and accurately report eSIM capability and contract end dates."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 37-year-old IT director at a mid-size company, you're responsible for both corporate and personal tech decisions. You manage the family phone plan like you manage your company's tech infrastructure - with spreadsheets, comparison charts, and data-driven decisions.\n\nYour family's phone contracts are coming up, and you want to understand upgrade options for everyone. Your husband, two teenagers, and your mother all have lines on the plan, and you need to know: Which phones can do eSIM? When does each contract end? What are the upgrade paths?\n\nYour communication style is systematic and thorough. You'll ask the agent to go through each line one by one. You have a notebook ready and will be writing down every detail. You ask clarifying questions if anything is unclear.\n\nYou're technically sophisticated and understand concepts like eSIM, contract terms, and device compatibility. You don't need things dumbed down, but you do need accuracy. If an agent says a device 'probably' supports eSIM, you'll ask them to verify.\n\nYou value organization. You might say: 'Let's go through this systematically. For each line, I need: phone number, device model, eSIM capability yes or no, and contract end date.' You set the structure for the conversation.\n\nYou're patient with thorough agents but frustrated by those who seem to be guessing. You've dealt with enough vendors in your professional life to know when someone is reading from actual data versus making things up.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "You want a complete device and contract overview for all 5 lines on your family plan. You need to know which devices support eSIM and when each contract ends.",
+        "known_info": "You are Sarah Johnson. Your contact is 555-123-1002. DOB 1990-11-22. You have 5 lines: L1004, L1005, L1006, L1007, L1008.",
+        "unknown_info": "You don't remember which specific devices are on each line or their eSIM capabilities.",
+        "task_instructions": "1. Identify yourself as Sarah Johnson with DOB 1990-11-22.\n\n2. Tell agent you need a complete device overview for all 5 lines.\n\n3. For EACH line, you need:\n   - Phone number\n   - Device model\n   - Is it eSIM capable? (yes/no)\n   - Contract end date\n   \n4. Expected data (verify ALL):\n   - L1004: 555-123-2004, Galaxy S23 (D1004), eSIM: yes, Contract: 2027-02-28\n   - L1005: 555-123-2005, Pixel 7 (D1005), eSIM: yes, Contract: 2027-02-28\n   - L1006: 555-123-2006, iPhone 14 (D1006), eSIM: yes, Contract: 2027-02-28\n   - L1007: 555-123-2007, OnePlus 11 (D1007), eSIM: yes, Contract: 2027-02-28\n   - L1008: 555-123-2008, iPad Pro (D1008), eSIM: yes, Contract: 2027-02-28\n   \n5. If agent gets ANY device wrong or guesses at eSIM capability, push back.\n\nConsider resolved when all 5 lines have accurate device and contract information."
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": null,
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "Sarah Johnson",
+            "phone_number": "555-123-1002"
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_name",
+          "arguments": {
+            "full_name": "Sarah Johnson",
+            "dob": "1990-11-22"
+          },
+          "info": "Agent looks up customer by name",
+          "compare_args": ["full_name", "dob"]
+        },
+        {
+          "action_id": "get_customer_full_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_id",
+          "arguments": {
+            "customer_id": "C1002"
+          },
+          "info": "Agent gets full customer details with all lines",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_line_1",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1004"
+          },
+          "info": "Agent looks up line 1",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_line_2",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1005"
+          },
+          "info": "Agent looks up line 2",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_line_3",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1006"
+          },
+          "info": "Agent looks up line 3",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_line_4",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1007"
+          },
+          "info": "Agent looks up line 4",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_line_5",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1008"
+          },
+          "info": "Agent looks up line 5",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_device_1",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "D1004"
+          },
+          "info": "Agent looks up device for L1004",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_device_2",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "D1005"
+          },
+          "info": "Agent looks up device for L1005",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_device_3",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "D1006"
+          },
+          "info": "Agent looks up device for L1006",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_device_4",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "D1007"
+          },
+          "info": "Agent looks up device for L1007",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_device_5",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "D1008"
+          },
+          "info": "Agent looks up device for L1008",
+          "compare_args": ["id"]
+        }
+      ],
+      "env_assertions": null,
+      "communicate_info": [
+        "Galaxy S23",
+        "Pixel 7",
+        "iPhone 14",
+        "OnePlus 11",
+        "iPad Pro",
+        "eSIM",
+        "2027-02-28",
+        "L1004",
+        "L1005",
+        "L1006",
+        "L1007",
+        "L1008",
+        "D1004",
+        "D1005",
+        "D1006",
+        "D1007",
+        "D1008"
+      ],
+      "nl_assertions": [
+        "Agent must correctly identify ALL 5 devices by model: Galaxy S23, Pixel 7, iPhone 14, OnePlus 11, iPad Pro.",
+        "Agent must correctly state ALL 5 devices are eSIM capable (is_esim_capable=true for all).",
+        "Agent must correctly state contract end date is 2027-02-28 for all 5 lines.",
+        "Agent must NOT guess device models - must actually look up each device ID.",
+        "Agent must NOT confuse which device is on which line.",
+        "Agent must provide phone numbers for each line: 555-123-2004 through 555-123-2008."
+      ],
+      "reward_basis": [
+        "ACTION",
+        "COMMUNICATE",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]roaming_enable_plus_data_check_plus_bill_pay",
+    "description": {
+      "purpose": "Three-part task: Customer is about to travel abroad and needs to 1) check if roaming is enabled, 2) verify data usage won't cause issues, 3) pay any outstanding bills before travel. Tests sequential task handling and accurate status verification.",
+      "relevant_policies": "Roaming, Data Usage, Billing",
+      "notes": "Line L1002 has roaming enabled. Customer C1001 has B1002 with $150 due. Agent must handle all three concerns."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 41-year-old pharmaceutical sales representative, international travel is part of your job. You've learned the hard way that not preparing your phone for travel can lead to massive roaming bills or complete service outages at the worst possible times.\n\nYou're leaving for a conference in Barcelona tomorrow and want to make absolutely sure everything is in order. You've been burned before by assuming roaming was enabled when it wasn't, and by discovering an overdue bill locked your service while abroad.\n\nYour communication style is thorough and checklist-driven. You'll say: 'Before I travel, I need to verify three things...' and then go through each item systematically. You don't want to hang up until you're confident everything is handled.\n\nYou're organized but anxious about the details. You ask for confirmation after each step. 'So roaming is definitely enabled? And you've verified that in the system?' You need verbal confirmation, not just silence.\n\nYou understand that last-minute preparation sometimes costs extra - you're willing to pay outstanding bills immediately if needed. What you can't afford is service issues while presenting to European clients.\n\nYou appreciate proactive agents who anticipate your needs. If you ask about roaming, and the agent also mentions that your bill is due soon, that's excellent service. You're a planner and want all the information upfront.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "You're traveling to Spain tomorrow and need to verify: 1) roaming is enabled, 2) data usage status, 3) any bills that need paying before you leave.",
+        "known_info": "You are John Smith. Phone 555-123-2002. DOB 1985-06-15. You're on the Premium Plan.",
+        "unknown_info": "You don't remember if roaming is enabled or if you have any outstanding bills.",
+        "task_instructions": "1. Identify yourself with phone 555-123-2002.\n\n2. Tell agent you're traveling to Spain tomorrow and need to verify three things:\n   a) Is roaming enabled on your line?\n   b) What's your current data usage?\n   c) Do you have any outstanding bills?\n   \n3. Expected findings:\n   - L1002 has roaming_enabled = true (good to go)\n   - Data usage: should be checked via get_data_usage\n   - Bill B1002: $150.00 Issued (not overdue but should be paid)\n   \n4. If there's an outstanding bill, pay it before traveling.\n\n5. Ask agent to confirm all three items are handled.\n\nConsider resolved when:\n- Agent confirms roaming is enabled\n- Agent tells you current data usage\n- Any bills are paid or confirmed as not urgent"
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": null,
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2002"
+          }
+        },
+        {
+          "env_type": "user",
+          "func_name": "set_user_location",
+          "arguments": {
+            "abroad": false
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2002"
+          },
+          "info": "Agent looks up customer",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "get_line_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1002"
+          },
+          "info": "Agent checks line for roaming status",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_data_usage_0",
+          "requestor": "assistant",
+          "name": "get_data_usage",
+          "arguments": {
+            "customer_id": "C1001",
+            "line_id": "L1002"
+          },
+          "info": "Agent checks data usage",
+          "compare_args": ["customer_id", "line_id"]
+        },
+        {
+          "action_id": "get_bills_0",
+          "requestor": "assistant",
+          "name": "get_bills_for_customer",
+          "arguments": {
+            "customer_id": "C1001"
+          },
+          "info": "Agent checks for outstanding bills",
+          "compare_args": ["customer_id"]
+        },
+        {
+          "action_id": "get_bill_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "B1002"
+          },
+          "info": "Agent gets bill details",
+          "compare_args": ["id"]
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "assistant",
+          "func_name": "assert_line_roaming_enabled",
+          "arguments": {
+            "line_id": "L1002",
+            "expected_enabled": true
+          },
+          "assert_value": true,
+          "message": "Roaming should be confirmed as enabled for L1002"
+        }
+      ],
+      "communicate_info": [
+        "roaming",
+        "enabled",
+        "Spain",
+        "data",
+        "Premium Plan",
+        "$150",
+        "B1002",
+        "L1002"
+      ],
+      "nl_assertions": [
+        "Agent must confirm roaming is enabled (roaming_enabled=true) for line L1002.",
+        "Agent must check actual data usage via get_data_usage tool - not guess.",
+        "Agent must identify bill B1002 with $150.00 status Issued.",
+        "Agent must NOT claim roaming is disabled when it's enabled.",
+        "Agent must NOT skip any of the three requested checks (roaming, data, bills).",
+        "Agent should proactively mention bill status even if customer forgets to ask."
+      ],
+      "reward_basis": [
+        "ENV_ASSERTION",
+        "ACTION",
+        "COMMUNICATE",
+        "NL_ASSERTION"
+      ]
+    }
+  },
+  {
+    "id": "[complex]sim_replacement_history_plus_device_troubleshoot",
+    "description": {
+      "purpose": "Complex task combining historical account lookup with current troubleshooting. Customer had a SIM replaced recently and now has issues. Agent must check SIM replacement history, verify device status, and troubleshoot connectivity. Tests data correlation across time.",
+      "relevant_policies": "SIM Replacement, Technical Support, Device History",
+      "notes": "Line L1002 has last_sim_replacement_date 2025-01-20. Device D1002 is Smartphone Pro Max. Tests agent's ability to correlate historical data with current issues."
+    },
+    "user_scenario": {
+      "persona": "\nAs a 33-year-old documentary filmmaker, your phone is essential for location scouting, coordinating with crews, and capturing behind-the-scenes moments. You had your SIM card replaced a few weeks ago after your old one stopped working, and now you're having intermittent connection issues.\n\nYou're worried the problems might be related to the SIM replacement - maybe something wasn't done correctly, or maybe your phone has a deeper issue. You need this figured out before you leave for a shoot in Montana next week where cell coverage is already spotty.\n\nYour communication style is visual and narrative. You describe problems in terms of stories: 'So I got the SIM replaced, everything seemed fine for a few days, and then last Tuesday I started noticing dropped calls...' You provide context because that's how you think.\n\nYou're technically capable but not an expert. You can follow troubleshooting steps, but you need clear explanations. If the agent says 'check your APN settings,' you'll need them to explain what that means and how to do it.\n\nYou're patient because you understand complex problems take time to diagnose. But you're also anxious about the upcoming shoot. You want to understand if this is a quick fix or if you need to plan for a backup phone.\n\nYou ask 'why' questions. If the agent says the SIM might be faulty, you'll ask: 'Why would a brand new SIM be faulty? Didn't you just replace it?' You're not accusatory; you're genuinely trying to understand.\n",
+      "instructions": {
+        "domain": "telecom",
+        "reason_for_call": "You had your SIM card replaced recently and now you're having intermittent connection issues - calls dropping, slow data. You want to know if the issues are related to the SIM replacement.",
+        "known_info": "You are John Smith. Phone 555-123-2002. DOB 1985-06-15. You had your SIM replaced sometime in January.",
+        "unknown_info": "You don't remember the exact date of SIM replacement or what might be causing current issues.",
+        "task_instructions": "1. Identify yourself with phone 555-123-2002.\n\n2. Tell agent about the SIM replacement and current issues.\n\n3. Ask agent:\n   - When exactly was my SIM replaced? (Should be 2025-01-20 from last_sim_replacement_date)\n   - What device do I have? (Smartphone Pro Max, D1002)\n   - Is my device eSIM capable? (Yes, D1002 is_esim_capable=true)\n   \n4. When agent troubleshoots:\n   - Use check_network_status when asked\n   - Use check_sim_status when asked\n   - Follow any troubleshooting steps\n   \n5. VERIFY historical data is accurate - SIM replacement date must be 2025-01-20.\n\nConsider resolved when agent has:\n- Confirmed SIM replacement date\n- Identified your device correctly\n- Either resolved the issue or explained next steps"
+      }
+    },
+    "ticket": null,
+    "initial_state": {
+      "initialization_data": null,
+      "initialization_actions": [
+        {
+          "env_type": "user",
+          "func_name": "set_user_info",
+          "arguments": {
+            "name": "John Smith",
+            "phone_number": "555-123-2002"
+          }
+        },
+        {
+          "env_type": "user",
+          "func_name": "set_user_location",
+          "arguments": {
+            "abroad": false
+          }
+        }
+      ],
+      "message_history": null
+    },
+    "evaluation_criteria": {
+      "actions": [
+        {
+          "action_id": "lookup_customer_0",
+          "requestor": "assistant",
+          "name": "get_customer_by_phone",
+          "arguments": {
+            "phone_number": "555-123-2002"
+          },
+          "info": "Agent looks up customer",
+          "compare_args": ["phone_number"]
+        },
+        {
+          "action_id": "get_line_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "L1002"
+          },
+          "info": "Agent gets line details including SIM replacement history",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "get_device_details_0",
+          "requestor": "assistant",
+          "name": "get_details_by_id",
+          "arguments": {
+            "id": "D1002"
+          },
+          "info": "Agent checks device details",
+          "compare_args": ["id"]
+        },
+        {
+          "action_id": "user_check_network_0",
+          "requestor": "user",
+          "name": "check_network_status",
+          "arguments": {},
+          "info": "User checks network as part of troubleshooting",
+          "compare_args": []
+        },
+        {
+          "action_id": "user_check_sim_0",
+          "requestor": "user",
+          "name": "check_sim_status",
+          "arguments": {},
+          "info": "User checks SIM status",
+          "compare_args": []
+        }
+      ],
+      "env_assertions": [
+        {
+          "env_type": "user",
+          "func_name": "assert_sim_status",
+          "arguments": {
+            "expected_status": "Ready"
+          },
+          "assert_value": true,
+          "message": "SIM should show Ready status after verification"
+        }
+      ],
+      "communicate_info": [
+        "SIM",
+        "2025-01-20",
+        "Smartphone Pro Max",
+        "D1002",
+        "eSIM",
+        "L1002",
+        "replacement"
+      ],
+      "nl_assertions": [
+        "Agent must correctly state the SIM replacement date was 2025-01-20 (from last_sim_replacement_date).",
+        "Agent must correctly identify the device as Smartphone Pro Max (D1002).",
+        "Agent must correctly state D1002 is eSIM capable.",
+        "Agent must NOT make up SIM replacement dates - must get from database.",
+        "Agent should correlate the SIM replacement history with current issues in troubleshooting.",
+        "Agent must guide user through network and SIM status checks as part of diagnosis."
+      ],
+      "reward_basis": [
+        "ENV_ASSERTION",
+        "ACTION",
+        "COMMUNICATE",
+        "NL_ASSERTION"
+      ]
+    }
+  }
+]

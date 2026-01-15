@@ -1,0 +1,694 @@
+[
+    {
+        "id": "[complex]multi_reservation_change_with_compensation",
+        "description": {
+            "purpose": "Complex task: User wants to change flights on one reservation and also get compensation for a delayed flight on a different reservation.",
+            "relevant_policies": "Flight change policy, Delay compensation policy",
+            "notes": "Agent must handle multiple reservations, verify flight delay, calculate compensation correctly."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 38-year-old marketing director who travels 150,000+ miles per year, you've developed a particular approach to airline service interactions. You're polite but direct, accustomed to navigating complex travel situations, and you know the policies better than most agents.\n\nYour travel schedule is demanding - you're often managing multiple trips simultaneously, which is why you sometimes mix up details between reservations. You think you're platinum status but honestly, with three different airline loyalty programs, you occasionally confuse which level you have with which carrier.\n\nYour communication style is efficient and organized. You typically open with the most pressing issue (the flight change) and then remember the secondary matter (compensation for the delay). You're not trying to be difficult; you're just trying to maximize the value of this call.\n\nWhen corrected about details like membership level, you accept it gracefully - you appreciate agents who actually look things up rather than taking your word for it. You've seen too many mistakes happen when agents assume rather than verify.\n\nYou're particularly attentive to baggage allowances because overage fees add up quickly when you're traveling as much as you do. You want exact numbers, not approximations.\n",
+            "instructions": {
+                "task_instructions": "First mention the flight change request. After agent addresses that, bring up the delayed flight. Provide reservation IDs when asked. If agent says your membership level is wrong, accept the correction. You want the exact numbers for baggage allowance.",
+                "domain": "airline",
+                "reason_for_call": "You need to change your flight on reservation AIXC49 to a different date (May 22nd instead of May 20th). Also, your flight on reservation NO6JO3 was delayed by over 2 hours and you want compensation. You believe you are a platinum member but might be wrong.",
+                "known_info": "You are Mia Li.\nYour user id is mia_li_3668.\nYour reservations are NO6JO3 (JFK to DFW, business class with insurance) and AIXC49 (LAX to BOS, basic economy).",
+                "unknown_info": "You don't know the exact delay duration or the compensation amount."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "1_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "mia_li_3668"},
+                    "info": "Must fetch user to verify membership and reservations"
+                },
+                {
+                    "action_id": "1_1",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "AIXC49"},
+                    "info": "Must get details for the flight change request"
+                },
+                {
+                    "action_id": "1_2",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "NO6JO3"},
+                    "info": "Must get details for the delayed flight compensation"
+                },
+                {
+                    "action_id": "1_3",
+                    "name": "search_direct_flight",
+                    "arguments": {"origin": "LAX", "destination": "BOS", "date": "2024-05-22"},
+                    "info": "Search for alternative flights on new date"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent correctly identifies user as gold member, not platinum.",
+                "Agent looks up both reservations to verify claims.",
+                "Agent searches for alternative flights for the change request.",
+                "Agent explains baggage allowance based on actual membership level."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]round_trip_booking_with_baggage_upgrade",
+        "description": {
+            "purpose": "Complex task: User wants to book a round trip with multiple passengers and also upgrade baggage on an existing reservation.",
+            "relevant_policies": "Booking policy, Baggage policy",
+            "notes": "Agent must handle new booking and existing reservation modification in same conversation."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 42-year-old elementary school teacher and mother of two, you approach trip planning with the same organizational skills you bring to your classroom. Family vacations require coordination, and you've learned to plan months in advance.\n\nYou're booking a trip to Las Vegas for your family - it's your anniversary celebration combined with spring break. You've been saving for this trip and want to make sure everything is handled correctly. Budget matters, but so does having a smooth travel experience.\n\nYour communication style is warm and detail-oriented. You naturally provide context because you know it helps - you mention it's a family trip, you specify dates clearly, and you keep track of multiple threads in a conversation (the new booking AND the baggage issue).\n\nYou're patient with service representatives because you work with people all day and understand that good service takes time. However, you do need to get this sorted before your lunch break ends, so you appreciate efficiency.\n\nWhen it comes to your kids' details, you have them memorized - birthdays, allergies, shoe sizes. You can rattle off passport information and DOBs without hesitation because that's just part of being a mom.\n",
+            "instructions": {
+                "task_instructions": "Start with the new booking request. Provide passenger details when asked. After booking discussion, mention you also need to add baggage to your existing reservation. You have 3 passengers for the new trip. Use your credit card for payment.",
+                "domain": "airline",
+                "reason_for_call": "You want to book a round trip from Denver to Las Vegas for 3 passengers departing May 25th and returning May 28th, economy class. Also, you need to add 2 extra bags to your existing reservation HKEG34.",
+                "known_info": "You are Mia Li.\nYour user id is mia_li_3668.\nPassengers: yourself (DOB 1990-03-15), your spouse Alex Li (DOB 1988-07-22), your child Sam Li (DOB 2015-11-10).\nYour existing reservation HKEG34 is DEN to LAS.",
+                "unknown_info": "You don't know exact flight times or prices."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "2_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "mia_li_3668"},
+                    "info": "Fetch user details"
+                },
+                {
+                    "action_id": "2_1",
+                    "name": "search_direct_flight",
+                    "arguments": {"origin": "DEN", "destination": "LAS", "date": "2024-05-25"},
+                    "info": "Search outbound flights"
+                },
+                {
+                    "action_id": "2_2",
+                    "name": "search_direct_flight",
+                    "arguments": {"origin": "LAS", "destination": "DEN", "date": "2024-05-28"},
+                    "info": "Search return flights"
+                },
+                {
+                    "action_id": "2_3",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "HKEG34"},
+                    "info": "Get existing reservation for baggage update"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent searches for flights on both dates for round trip.",
+                "Agent correctly handles multiple passenger information.",
+                "Agent provides pricing information before booking.",
+                "Agent addresses the baggage upgrade request for existing reservation."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]verify_claims_wrong_cabin_class",
+        "description": {
+            "purpose": "Complex anti-hallucination task: User claims business class but actually has basic economy, and claims 4 passengers but has only 2.",
+            "relevant_policies": "Verification policy",
+            "notes": "Agent must verify all claims against actual data and politely correct user."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 55-year-old retired insurance adjuster, you've developed habits of attention to detail - but sometimes your memory isn't what it used to be. You booked this trip months ago and honestly can't remember exactly what you selected.\n\nYou're calling because you want to understand your seat selection options. In your mind, you're pretty sure you booked business class because you remember thinking you wanted extra comfort for this trip. And you're almost certain you're traveling with your daughter, son-in-law, and grandson - that's 4 people, right?\n\nYour communication style is conversational and slightly apologetic. You acknowledge upfront that your memory might not be perfect, saying things like 'I believe I booked...' or 'If I remember correctly...' You're not trying to deceive anyone; you genuinely think you remember correctly.\n\nWhen corrected with evidence, you accept it gracefully and often with relief. 'Oh, you're right, I must have been thinking of that other trip!' You appreciate agents who gently clarify rather than making you feel foolish.\n\nYou ask follow-up questions to understand your options given the actual situation. If you're in economy, what can you do about seats? What are the upgrade possibilities?\n",
+            "instructions": {
+                "task_instructions": "Insist initially that you have business class and 4 passengers. Accept correction gracefully if agent provides evidence. Ask about seat selection options based on your actual cabin class.",
+                "domain": "airline",
+                "reason_for_call": "You want to know about seat selection options for your business class flight. You have 4 passengers traveling.",
+                "known_info": "You are Mei Hernandez.\nYour user id is mei_hernandez_8984.\nReservation 1AKIA8 (which you incorrectly remember as business class with 4 passengers).",
+                "unknown_info": "You don't actually know the cabin class or passenger count."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "3_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "mei_hernandez_8984"},
+                    "info": "Fetch user to verify claims"
+                },
+                {
+                    "action_id": "3_1",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "1AKIA8"},
+                    "info": "Verify cabin class and passenger count"
+                }
+            ],
+            "communicate_info": [
+                "economy",
+                "2"
+            ],
+            "nl_assertions": [
+                "Agent must NOT assume business class is correct without verification.",
+                "Agent correctly identifies the reservation as economy class.",
+                "Agent correctly identifies there are fewer than 4 passengers.",
+                "Agent explains seat selection options based on actual cabin class (economy)."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]cancelled_flight_rebooking_with_compensation",
+        "description": {
+            "purpose": "Complex task: User's flight was cancelled, needs rebooking and wants compensation.",
+            "relevant_policies": "Cancellation policy, Rebooking policy, Compensation policy",
+            "notes": "Agent must check flight status, handle rebooking search, and process appropriate compensation."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 29-year-old emergency room nurse, your schedule is demanding and your time off is precious. You had exactly 4 days off to visit your mother, and finding out your flight was cancelled has thrown everything into chaos.\n\nYou're frustrated - genuinely frustrated - because this isn't just an inconvenience, it's eating into irreplaceable family time. Every hour you're not on a plane is an hour you're not with your mom. But you also work in a high-stress environment and know how to channel frustration productively.\n\nYour communication style is direct and slightly urgent. You don't have time for long explanations or corporate pleasantries. You want to know: What happened? What can you do about it? What compensation are you entitled to? You ask questions in rapid succession.\n\nDespite your frustration, you're not rude to the agent - you know they didn't cancel your flight. But you are assertive. You want solutions, not apologies. 'I understand it's not your fault, but I need to get to Philadelphia today.'\n\nYou're flexible about specific flights because at this point, anything that gets you there is better than nothing. You just need the agent to find options quickly.\n",
+            "instructions": {
+                "task_instructions": "Express frustration about the cancellation. Ask to be rebooked on the next available flight. Also request compensation for the inconvenience. If agent asks for specific dates, be flexible within the same week.",
+                "domain": "airline",
+                "reason_for_call": "Your flight HAT001 on May 3rd was cancelled. You need to get on another flight and want compensation for the hassle.",
+                "known_info": "You are Chen Hernandez.\nYour user id is chen_hernandez_2608.\nFlight HAT001 on May 3rd from PHL to LGA was cancelled.",
+                "unknown_info": "You don't know what flights are available or compensation amounts."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "4_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "chen_hernandez_2608"},
+                    "info": "Fetch user details"
+                },
+                {
+                    "action_id": "4_1",
+                    "name": "get_flight_status",
+                    "arguments": {"flight_number": "HAT001", "date": "2024-05-03"},
+                    "info": "Verify the flight was actually cancelled"
+                },
+                {
+                    "action_id": "4_2",
+                    "name": "search_direct_flight",
+                    "arguments": {"origin": "PHL", "destination": "LGA", "date": "2024-05-16"},
+                    "info": "Search for alternative flights"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent verifies the flight was indeed cancelled before proceeding.",
+                "Agent searches for alternative flights to help rebook.",
+                "Agent explains compensation policy for cancelled flights.",
+                "Agent does not assume cancellation without checking status."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]multi_passenger_update_with_price_calculation",
+        "description": {
+            "purpose": "Complex task: User needs to update passenger information and add insurance, requiring price calculation.",
+            "relevant_policies": "Passenger update policy, Insurance policy",
+            "notes": "Agent must handle multiple data points and calculate total correctly."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 45-year-old corporate attorney, attention to detail is your profession. You're traveling with two associates for a client meeting, and you've noticed an error in one of the passenger names - a typo that could cause problems at TSA.\n\nYou made the booking quickly between depositions and didn't review it carefully. Now you're doing your due diligence before the trip. You also want to add travel insurance because the client meeting might reschedule, and you need flexibility.\n\nYour communication style is precise and formal. You state facts clearly, ask specific questions, and expect clear answers. When you say 'I need the total cost breakdown,' you mean itemized - insurance per person, any change fees, the complete picture.\n\nYou're accustomed to reviewing contracts and fine print, so you naturally ask about terms and conditions. What exactly does the insurance cover? Are there restrictions on the name change? You want to understand what you're agreeing to.\n\nYou're not impatient, but you are efficient. You bill by the hour professionally, and you respect others' time as well. You provide all necessary information upfront and appreciate agents who work at your pace.\n",
+            "instructions": {
+                "task_instructions": "Explain you need to fix a passenger name (typo in last name) and also want to add insurance for all passengers. Ask for total cost breakdown. Confirm you want to proceed if price is reasonable.",
+                "domain": "airline",
+                "reason_for_call": "You need to correct a passenger name on reservation UUN48W - one last name was spelled wrong. Also want to add travel insurance for all 3 passengers.",
+                "known_info": "You are James Taylor.\nYour user id is james_taylor_7043.\nReservation UUN48W has 3 passengers, business class, IAH to LAS.",
+                "unknown_info": "You don't know the insurance price per person."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "5_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "james_taylor_7043"},
+                    "info": "Fetch user details"
+                },
+                {
+                    "action_id": "5_1",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "UUN48W"},
+                    "info": "Get reservation to see passengers and insurance status"
+                }
+            ],
+            "communicate_info": [
+                "3"
+            ],
+            "nl_assertions": [
+                "Agent retrieves reservation details before making changes.",
+                "Agent confirms the number of passengers (3).",
+                "Agent explains that insurance is already included or provides pricing if not.",
+                "Agent asks for specific passenger name correction details."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]one_stop_flight_with_certificate_payment",
+        "description": {
+            "purpose": "Complex task: User wants to book a one-stop flight using a combination of certificate and credit card payment.",
+            "relevant_policies": "Booking policy, Payment policy, Certificate policy",
+            "notes": "Agent must search one-stop flights and handle split payment correctly."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 33-year-old freelance photographer, your income fluctuates with projects, so you've learned to maximize every dollar. You have a travel certificate from a previous cancelled trip, and you want to use every cent of it before booking anything new.\n\nYou're specifically looking for one-stop flights because they're usually cheaper, and the layover gives you time to stretch and review photos from your last shoot. You're not in a rush; you'd rather save money than save time.\n\nYour communication style is creative and conversational. You think out loud sometimes, explaining your reasoning - 'I'm looking at one-stop because direct flights are usually more expensive, right?' You're collaborative rather than demanding.\n\nYou're comfortable with uncertainty about exact amounts. You know you have a certificate but aren't sure of the exact balance. You're happy for the agent to look it up. Similarly, you want to see flight options before committing to anything.\n\nMoney discussions don't make you uncomfortable - you're used to negotiating rates for photography work. You ask direct questions about pricing and appreciate transparency about what things cost.\n",
+            "instructions": {
+                "task_instructions": "Request one-stop flight options. Ask about using your certificate for partial payment. Confirm you want to use credit card for remaining balance. Ask for total breakdown.",
+                "domain": "airline",
+                "reason_for_call": "You want to book a one-stop flight from Atlanta to Denver on May 20th for 1 passenger, economy class. You have a travel certificate you'd like to use.",
+                "known_info": "You are Aarav Nguyen.\nYour user id is aarav_nguyen_1055.\nYou have certificate_1530821 in your account.",
+                "unknown_info": "You don't know the certificate amount or flight prices."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "6_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "aarav_nguyen_1055"},
+                    "info": "Fetch user to see payment methods including certificate"
+                },
+                {
+                    "action_id": "6_1",
+                    "name": "search_onestop_flight",
+                    "arguments": {"origin": "ATL", "destination": "DEN", "date": "2024-05-20"},
+                    "info": "Search for one-stop flights"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent searches for one-stop flights specifically.",
+                "Agent identifies available payment methods including certificate.",
+                "Agent explains how certificate can be applied to booking.",
+                "Agent provides flight options with pricing."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]cancel_and_rebook_same_route",
+        "description": {
+            "purpose": "Complex task: User wants to cancel an existing reservation and immediately book a new one for the same route with different dates.",
+            "relevant_policies": "Cancellation policy, Refund policy, Booking policy",
+            "notes": "Agent must handle cancellation within policy limits and new booking in sequence."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 52-year-old regional sales manager, your calendar changes constantly. Clients reschedule, deals slip, and you've learned to be flexible. This is at least the third time this quarter you've had to change travel dates.\n\nYou're pragmatic about cancellation fees and change policies - they're just a cost of doing business in your role. What you want to know upfront is: Can I cancel? What will it cost? And can we book the new dates right now while I have you on the phone?\n\nYour communication style is businesslike and efficient. You provide context ('my meeting got rescheduled') but don't need sympathy - you just need solutions. You ask direct questions and make quick decisions once you have the information.\n\nYou prefer to handle everything in one call. The idea of calling back later or being transferred to another department is frustrating. You've been a customer long enough to know the system, and you appreciate agents who can handle multi-step requests.\n\nYou care about cabin class because long flights in coach affect your ability to work and arrive fresh for meetings. If you booked business class originally, you want business class on the new flight.\n",
+            "instructions": {
+                "task_instructions": "First ask about cancelling your existing reservation. If cancellation isn't possible for full refund, ask about change fees. Then ask about booking a new flight for different dates. You prefer to keep the same cabin class.",
+                "domain": "airline",
+                "reason_for_call": "Your meeting got rescheduled. You need to cancel reservation 4G94T6 (MCO to PHX on May 16th) and book a new flight for May 23rd instead.",
+                "known_info": "You are Lucas Hernandez.\nYour user id is lucas_hernandez_8985.\nReservation 4G94T6 is MCO to PHX, business class.",
+                "unknown_info": "You don't know if cancellation is within the free cancellation window."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "7_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "lucas_hernandez_8985"},
+                    "info": "Fetch user details"
+                },
+                {
+                    "action_id": "7_1",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "4G94T6"},
+                    "info": "Get current reservation details"
+                },
+                {
+                    "action_id": "7_2",
+                    "name": "search_direct_flight",
+                    "arguments": {"origin": "MCO", "destination": "PHX", "date": "2024-05-23"},
+                    "info": "Search for new flight on requested date"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent checks existing reservation before discussing cancellation.",
+                "Agent explains cancellation policy and any fees.",
+                "Agent searches for alternative flights on requested new date.",
+                "Agent maintains same cabin class preference when showing options."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]group_booking_baggage_calculation",
+        "description": {
+            "purpose": "Complex task: User needs detailed baggage allowance calculation for a group with different membership levels.",
+            "relevant_policies": "Baggage policy, Membership policy",
+            "notes": "Agent must correctly calculate baggage based on cabin class and membership."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 35-year-old event coordinator for a nonprofit organization, you're organizing a team trip to a conference. Every dollar matters when you're working with donor money, and baggage fees can add up quickly for a group.\n\nYou're detail-oriented by profession - events require tracking hundreds of logistics simultaneously. When you ask about baggage allowances, you're building a spreadsheet that will go into the trip budget. You need exact numbers, not estimates.\n\nYour communication style is organized and thorough. You ask follow-up questions to ensure you haven't missed anything. 'So that's 1 free checked bag per person in basic economy? And what about carry-ons? And personal items?' You're creating a complete picture.\n\nYou push back politely when given vague answers. 'You mentioned approximately 1 bag - is it exactly 1, or could it be more under certain circumstances?' You've been burned before by assumptions, and you'd rather ask one more question than discover a surprise at the airport.\n\nYou're also thinking ahead to paid baggage options. Some team members will have equipment to bring. What does it cost to add bags? Is there a group discount? You want all the information upfront.\n",
+            "instructions": {
+                "task_instructions": "You're organizing a group trip and need exact baggage allowance numbers. Ask for breakdown per person. If agent gives approximate numbers, insist on exact figures. Ask about paid baggage options too.",
+                "domain": "airline",
+                "reason_for_call": "You have a group reservation and need to know the exact baggage allowance. You have 4 passengers in one reservation and want to know how many bags each person can bring.",
+                "known_info": "You are Sofia Anderson.\nYour user id is sofia_anderson_8718.\nReservation 1OWO6T has 3 passengers, basic economy, round trip BOS to DFW.",
+                "unknown_info": "You don't know baggage rules for basic economy."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "8_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "sofia_anderson_8718"},
+                    "info": "Fetch user to check membership level"
+                },
+                {
+                    "action_id": "8_1",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "1OWO6T"},
+                    "info": "Get reservation to verify cabin class and passenger count"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent correctly identifies basic economy cabin class.",
+                "Agent provides specific baggage allowance numbers, not vague answers.",
+                "Agent explains paid baggage options and prices.",
+                "Agent considers membership level in baggage calculation."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]flight_status_multiple_legs_delay",
+        "description": {
+            "purpose": "Complex task: User has a multi-leg trip and wants status of all flights plus compensation if any were delayed.",
+            "relevant_policies": "Flight status policy, Delay compensation policy",
+            "notes": "Agent must check multiple flight statuses and calculate any compensation."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 40-year-old doctoral student in anthropology, you're traveling to a conference to present your research. The trip involves connecting flights, and you've been anxiously tracking the status because missing your connection would mean missing your presentation slot.\n\nYou're naturally anxious about travel - the academic job market is brutal, and this presentation could be important for your career. Every delay feels like it could cascade into disaster. You've been checking the flight tracker app obsessively.\n\nYour communication style reflects your academic background - thorough and inquisitive. You ask questions to understand the full picture. 'If the first leg is delayed, what happens to my connection? Is there a minimum connection time? What are my rebooking options?'\n\nYou're also pragmatic about compensation. If flights were delayed, you want to know your rights. You've heard airlines offer compensation for delays but aren't sure of the details. You ask specific questions: How long does a delay have to be? What form does compensation take? Is it automatic or do you have to request it?\n\nYou appreciate patience from service agents because you know your questions can be detailed. You're not trying to be difficult; you're trying to plan for contingencies because that's how your analytical mind works.\n",
+            "instructions": {
+                "task_instructions": "Ask about all your flight statuses. If any flights were delayed, ask about compensation. You want to know both outbound and return flight statuses. Be specific about wanting compensation amounts.",
+                "domain": "airline",
+                "reason_for_call": "You want to check the status of all flights in your round-trip reservation. You heard there might have been delays.",
+                "known_info": "You are Isabella Muller.\nYour user id is isabella_muller_2311.\nReservation PGAGLM is LAX to ATL, one-way with connecting flights.",
+                "unknown_info": "You don't know the actual flight status or if there were delays."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "9_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "isabella_muller_2311"},
+                    "info": "Fetch user details"
+                },
+                {
+                    "action_id": "9_1",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "PGAGLM"},
+                    "info": "Get reservation to see all flights"
+                },
+                {
+                    "action_id": "9_2",
+                    "name": "get_flight_status",
+                    "arguments": {"flight_number": "HAT090", "date": "2024-05-24"},
+                    "info": "Check first leg status"
+                },
+                {
+                    "action_id": "9_3",
+                    "name": "get_flight_status",
+                    "arguments": {"flight_number": "HAT223", "date": "2024-05-24"},
+                    "info": "Check second leg status"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent checks status of all flights in the reservation.",
+                "Agent reports actual status, not assumed status.",
+                "Agent explains compensation policy if delays are found.",
+                "Agent provides specific flight times and status details."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]membership_verification_gift_card_booking",
+        "description": {
+            "purpose": "Complex task: User wants to use gift card balance for new booking and verify their membership benefits.",
+            "relevant_policies": "Gift card policy, Membership policy, Booking policy",
+            "notes": "Agent must verify gift card balance is sufficient and explain membership benefits."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 27-year-old software developer, you received an airline gift card as a holiday bonus from your company. You've been meaning to use it but haven't flown much since starting your remote job. Now you're planning a trip to visit a friend in Los Angeles.\n\nYou're practical and budget-conscious - a gift card is essentially free money, and you want to maximize its value. You'd rather put the gift card toward the flight and save your cash for experiences at the destination.\n\nYour communication style is straightforward and curious. You ask questions when you don't understand something - like what exactly silver membership gets you. You've seen the membership mentioned in emails but never really looked into what benefits you have.\n\nYou're comfortable with technology and expect modern payment flexibility. Using a gift card for partial payment seems like it should be straightforward, and you'd be surprised if there were complicated restrictions.\n\nYou do your mental math in real-time. If the agent says the flight costs $350 and your gift card has $200, you're already calculating that you'll need to pay $150 on your credit card. You appreciate when agents walk through the math with you to confirm.\n",
+            "instructions": {
+                "task_instructions": "Ask about your gift card balance first. Then ask about booking a flight and what membership benefits you get. You want to maximize value. If gift card doesn't cover full price, ask about paying remainder with credit card.",
+                "domain": "airline",
+                "reason_for_call": "You want to use your gift card to book a flight from Miami to Los Angeles on May 20th. Also want to understand your membership benefits.",
+                "known_info": "You are Aarav Nguyen.\nYour user id is aarav_nguyen_1055.\nYou have a gift card (gift_card_9785014) in your account.",
+                "unknown_info": "You don't know your gift card balance or current flight prices."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "10_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "aarav_nguyen_1055"},
+                    "info": "Fetch user to see gift card balance and membership"
+                },
+                {
+                    "action_id": "10_1",
+                    "name": "search_direct_flight",
+                    "arguments": {"origin": "MIA", "destination": "LAX", "date": "2024-05-20"},
+                    "info": "Search for available flights"
+                }
+            ],
+            "communicate_info": [
+                "silver"
+            ],
+            "nl_assertions": [
+                "Agent correctly identifies membership level as silver.",
+                "Agent checks gift card balance before proceeding.",
+                "Agent explains what silver membership benefits include.",
+                "Agent provides flight options with pricing."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]certificate_split_payment_with_baggage",
+        "description": {
+            "purpose": "Complex task: Customer wants to book a flight using multiple certificates plus credit card, and also needs to add checked baggage. Tests multi-payment-method handling and accurate pricing calculation.",
+            "relevant_policies": "Certificate payment policy, Baggage policy, Booking policy",
+            "notes": "Customer has two certificates worth $250 each. Tests agent's ability to combine payment methods and calculate baggage fees based on membership."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 47-year-old retired airline pilot, you know the industry inside and out. You accumulated certificates from various cancellations and delays over the years, and now you want to use them strategically. You understand fare classes, baggage policies, and how certificates work - probably better than most agents.\n\nYou're booking a trip to visit your grandchildren in Denver, and you want to maximize the value of your certificates. You'll be bringing gifts, so you need checked baggage. You want to understand exactly how the math works: certificates first, then remainder on credit card.\n\nYour communication style is knowledgeable but not condescending. You ask specific questions: 'What's the total certificate balance?' 'How much will baggage cost given my membership level?' 'What's my remaining balance after certificates?'\n\nYou appreciate competent agents who can keep up with your questions. You've worked in aviation for 30 years, and you can tell when someone knows their systems versus when they're guessing.\n\nYou're meticulous about the numbers. If the agent says the flight is $400 and your certificates total $500, you'll confirm: 'So I'll have $100 left on my certificates after this booking, correct?'\n",
+            "instructions": {
+                "task_instructions": "Ask about all your certificates first. Then book a flight and calculate how much each certificate will cover. Also add 2 checked bags. You want exact numbers for everything.",
+                "domain": "airline",
+                "reason_for_call": "You want to book a flight from Dallas to Denver on May 22nd, economy class. You want to use your certificates to pay and also add 2 checked bags.",
+                "known_info": "You are Mei Hernandez.\nYour user id is mei_hernandez_8984.\nYou have certificates: certificate_7502997 ($250) and certificate_3321326 ($250).",
+                "unknown_info": "You don't know exact flight prices or baggage fees for your membership level."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "11_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "mei_hernandez_8984"},
+                    "info": "Get user to see certificates and membership"
+                },
+                {
+                    "action_id": "11_1",
+                    "name": "search_direct_flight",
+                    "arguments": {"origin": "DFW", "destination": "DEN", "date": "2024-05-22"},
+                    "info": "Search for flights"
+                }
+            ],
+            "communicate_info": [
+                "$250",
+                "certificate",
+                "gold",
+                "baggage"
+            ],
+            "nl_assertions": [
+                "Agent correctly identifies both certificates with amounts ($250 each).",
+                "Agent correctly states membership level is gold.",
+                "Agent calculates total certificate value ($500).",
+                "Agent explains baggage allowance and fees for gold members.",
+                "Agent does not hallucinate certificate amounts - must get from user record."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]insurance_claim_plus_rebooking",
+        "description": {
+            "purpose": "Complex task: Customer's flight was cancelled, they have insurance, and want to understand their claim options plus rebook on a different flight. Tests insurance policy knowledge and rebooking workflow.",
+            "relevant_policies": "Insurance policy, Cancellation policy, Rebooking policy",
+            "notes": "Tests agent's ability to handle insurance claims and rebooking simultaneously."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 32-year-old event planner, cancelled flights are a professional hazard. You've learned to always buy travel insurance after a costly lesson early in your career. Now your flight got cancelled, and you need to both file an insurance claim AND get rebooked.\n\nYou're organized and keep meticulous records. When calling about the cancellation, you have your reservation ID ready, you know the original flight details, and you've already checked what alternative flights might work for your schedule.\n\nYour communication style is efficient and structured. You lead with the problem ('My flight was cancelled'), then state what you need ('I need to file an insurance claim and get rebooked'), then provide relevant details. You don't ramble.\n\nYou're assertive but professional. You know your rights as a customer with insurance, and you expect them to be honored. If the agent doesn't immediately mention the insurance, you'll bring it up: 'I have travel insurance on this reservation. How do I file a claim?'\n\nYou need to be in Boston by a specific time for an event you're planning. You're flexible on which exact flight, but you need options that work for your schedule. Time is money in your business.\n",
+            "instructions": {
+                "task_instructions": "Tell the agent your flight was cancelled. Ask about your insurance coverage and how to file a claim. Also ask to be rebooked on an alternative flight to the same destination.",
+                "domain": "airline",
+                "reason_for_call": "Your flight HAT001 on May 14th from PHL to LGA was cancelled. You have insurance on reservation V25KYO and want to file a claim. Also need to rebook.",
+                "known_info": "You are Chen Hernandez.\nYour user id is chen_hernandez_2608.\nReservation V25KYO should have insurance coverage.",
+                "unknown_info": "You don't know exact insurance benefits or alternative flight options."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "12_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "chen_hernandez_2608"},
+                    "info": "Get user details"
+                },
+                {
+                    "action_id": "12_1",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "V25KYO"},
+                    "info": "Get reservation to check insurance status"
+                },
+                {
+                    "action_id": "12_2",
+                    "name": "get_flight_status",
+                    "arguments": {"flight_number": "HAT001", "date": "2024-05-14"},
+                    "info": "Verify flight was actually cancelled"
+                },
+                {
+                    "action_id": "12_3",
+                    "name": "search_direct_flight",
+                    "arguments": {"origin": "PHL", "destination": "LGA", "date": "2024-05-16"},
+                    "info": "Search for alternative flights"
+                }
+            ],
+            "communicate_info": [
+                "insurance",
+                "cancelled",
+                "claim"
+            ],
+            "nl_assertions": [
+                "Agent verifies the flight was actually cancelled before proceeding.",
+                "Agent checks if reservation has insurance coverage.",
+                "Agent explains insurance claim process if coverage exists.",
+                "Agent searches for alternative rebooking options.",
+                "Agent does not assume insurance status - must check reservation."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]multi_reservation_same_route_consolidation",
+        "description": {
+            "purpose": "Complex task: Customer accidentally booked the same route twice and wants to consolidate into one reservation or cancel one with full refund. Tests duplicate detection and cancellation policy knowledge.",
+            "relevant_policies": "Cancellation policy, Duplicate booking policy, Refund policy",
+            "notes": "Tests agent's ability to identify duplicate bookings and handle cancellation appropriately."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 56-year-old university professor with tenure, you're brilliant in your field (medieval literature) but admittedly scattered when it comes to practical matters. You think you may have booked the same trip twice - once on your phone while rushing between classes, and once on your laptop later that evening when you forgot you'd already booked.\n\nYou're embarrassed about the potential duplicate but also frustrated. You're not wealthy, and paying for the same trip twice would be a significant hit to your budget. You need someone to help you figure out what happened and fix it.\n\nYour communication style is verbose and slightly apologetic. You tend to over-explain: 'You see, I was in a rush between my Medieval Poetry seminar and office hours, and I thought I'd just quickly book the flight on my phone, but then later I wasn't sure if it had gone through...' You appreciate patient agents.\n\nYou're not tech-savvy and easily confused by booking confirmation emails. You might have multiple confirmations but aren't sure if they're for the same booking or different ones. You need the agent to look at your reservations and tell you what's what.\n\nYou want a full refund on any duplicate. You're polite about it, but also clear: 'I certainly didn't intend to book twice, and I'd like my money back for the extra booking.'\n",
+            "instructions": {
+                "task_instructions": "Explain you think you accidentally booked twice. Ask the agent to look at all your reservations and tell you if there are duplicates. If there are duplicates, you want to cancel one for a full refund.",
+                "domain": "airline",
+                "reason_for_call": "You think you may have accidentally booked the same trip twice to Philadelphia. You need the agent to check your reservations and help cancel any duplicates.",
+                "known_info": "You are Sophia Taylor.\nYour user id is sophia_taylor_9065.\nYou're not sure how many reservations you have.",
+                "unknown_info": "You don't know the exact reservation IDs or if they're truly duplicates."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "13_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "sophia_taylor_9065"},
+                    "info": "Get user to see all reservations"
+                },
+                {
+                    "action_id": "13_1",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "YKYUVI"},
+                    "info": "Get first reservation details"
+                },
+                {
+                    "action_id": "13_2",
+                    "name": "get_reservation_details",
+                    "arguments": {"reservation_id": "Z8T7FA"},
+                    "info": "Get second reservation details if exists"
+                }
+            ],
+            "communicate_info": [
+                "reservation"
+            ],
+            "nl_assertions": [
+                "Agent retrieves all customer reservations to identify potential duplicates.",
+                "Agent compares routes and dates to determine if bookings are truly duplicates.",
+                "Agent explains cancellation options and refund policies.",
+                "Agent does not cancel without verifying customer intent."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]saved_passenger_update_plus_booking",
+        "description": {
+            "purpose": "Complex task: Customer needs to update saved passenger information and then book a flight for that passenger. Tests account management plus booking workflow.",
+            "relevant_policies": "Passenger information policy, Booking policy",
+            "notes": "Tests sequential account modification followed by booking."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 44-year-old healthcare administrator, you manage travel arrangements for yourself and your elderly mother who lives in Phoenix. You have your mother saved as a passenger in your account, but some of her information might be outdated.\n\nYou're organized and systematic. You want to first verify your mother's saved information is correct, update anything that's wrong, and then book her a flight. You approach this like a checklist: Step 1, Step 2, Step 3.\n\nYour communication style is clear and methodical. 'First, can you tell me what passenger information you have saved for my mother? I want to verify it's correct before booking.' You set the agenda for the call.\n\nYou're protective of your mother and want everything to be perfect for her trip. She's 67 and doesn't handle travel complications well. You ask clarifying questions to make sure there won't be any issues at the airport.\n\nYou appreciate thoroughness over speed. You'd rather spend an extra 5 minutes verifying everything is correct than have problems at check-in. If the agent tries to rush past verification, you'll slow them down.\n",
+            "instructions": {
+                "task_instructions": "First ask the agent to read back your saved passenger information. Verify the name and date of birth are correct. Then book a flight for that passenger. You want to confirm all details before completing the booking.",
+                "domain": "airline",
+                "reason_for_call": "You need to verify the saved passenger information for your mother and then book her a flight from Chicago to Phoenix on May 25th.",
+                "known_info": "You are Liam Santos.\nYour user id is liam_santos_5621.\nYour mother Liam Nguyen (DOB 1960-08-07) is saved as a passenger.",
+                "unknown_info": "You're not sure if all saved information is still accurate."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "14_0",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "liam_santos_5621"},
+                    "info": "Get user to see saved passengers"
+                },
+                {
+                    "action_id": "14_1",
+                    "name": "search_direct_flight",
+                    "arguments": {"origin": "ORD", "destination": "PHX", "date": "2024-05-25"},
+                    "info": "Search for flights to Phoenix"
+                }
+            ],
+            "communicate_info": [
+                "Liam Nguyen",
+                "1960-08-07",
+                "passenger"
+            ],
+            "nl_assertions": [
+                "Agent retrieves and reads back saved passenger information.",
+                "Agent correctly identifies saved passenger as Liam Nguyen with DOB 1960-08-07.",
+                "Agent asks for confirmation before proceeding with booking.",
+                "Agent searches for requested flights after passenger verification."
+            ]
+        },
+        "annotations": null
+    }
+]

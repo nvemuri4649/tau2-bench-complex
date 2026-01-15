@@ -735,6 +735,82 @@ class AirlineTools(ToolKitBase):  # Tools
         return self._get_flight_instance(flight_number, date).status
 
 
+    # ==================== ASSERTION FUNCTIONS FOR EVALUATION ====================
+    # These functions are used by the evaluation system to verify task completion
+
+    def assert_user_membership(self, user_id: str, expected_membership: str) -> bool:
+        """Assert that a user has the expected membership level."""
+        user = self._get_user(user_id)
+        return user.membership == expected_membership
+
+    def assert_reservation_status(self, reservation_id: str, expected_status: str) -> bool:
+        """Assert that a reservation has the expected status."""
+        reservation = self._get_reservation(reservation_id)
+        return reservation.status == expected_status
+
+    def assert_reservation_cabin(self, reservation_id: str, expected_cabin: str) -> bool:
+        """Assert that a reservation has the expected cabin class."""
+        reservation = self._get_reservation(reservation_id)
+        return reservation.cabin == expected_cabin
+
+    def assert_reservation_passenger_count(self, reservation_id: str, expected_count: int) -> bool:
+        """Assert that a reservation has the expected number of passengers."""
+        reservation = self._get_reservation(reservation_id)
+        return len(reservation.passengers) == expected_count
+
+    def assert_reservation_insurance(self, reservation_id: str, expected_insurance: str) -> bool:
+        """Assert that a reservation has the expected insurance status."""
+        reservation = self._get_reservation(reservation_id)
+        return reservation.insurance == expected_insurance
+
+    def assert_reservation_baggage_count(self, reservation_id: str, expected_total: int) -> bool:
+        """Assert that a reservation has the expected total baggage count."""
+        reservation = self._get_reservation(reservation_id)
+        return reservation.total_baggages == expected_total
+
+    def assert_reservation_nonfree_baggage(self, reservation_id: str, expected_nonfree: int) -> bool:
+        """Assert that a reservation has the expected non-free baggage count."""
+        reservation = self._get_reservation(reservation_id)
+        return reservation.nonfree_baggages == expected_nonfree
+
+    def assert_flight_status(self, flight_number: str, date: str, expected_status: str) -> bool:
+        """Assert that a flight has the expected status."""
+        status = self._get_flight_instance(flight_number, date).status
+        return status == expected_status
+
+    def assert_user_has_certificate(self, user_id: str, min_amount: int = 0) -> bool:
+        """Assert that a user has at least one certificate with at least min_amount."""
+        user = self._get_user(user_id)
+        for pm in user.payment_methods.values():
+            if pm.source == "certificate" and pm.amount >= min_amount:
+                return True
+        return False
+
+    def assert_user_gift_card_balance(self, user_id: str, gift_card_id: str, expected_balance: float) -> bool:
+        """Assert that a user's gift card has the expected balance."""
+        user = self._get_user(user_id)
+        if gift_card_id not in user.payment_methods:
+            return False
+        pm = user.payment_methods[gift_card_id]
+        return pm.source == "gift_card" and pm.amount == expected_balance
+
+    def assert_reservation_flight_count(self, reservation_id: str, expected_count: int) -> bool:
+        """Assert that a reservation has the expected number of flight segments."""
+        reservation = self._get_reservation(reservation_id)
+        return len(reservation.flights) == expected_count
+
+    def assert_reservation_origin(self, reservation_id: str, expected_origin: str) -> bool:
+        """Assert that a reservation has the expected origin."""
+        reservation = self._get_reservation(reservation_id)
+        return reservation.origin == expected_origin
+
+    def assert_reservation_destination(self, reservation_id: str, expected_destination: str) -> bool:
+        """Assert that a reservation has the expected destination."""
+        reservation = self._get_reservation(reservation_id)
+        return reservation.destination == expected_destination
+
+
+
 if __name__ == "__main__":
     from tau2.domains.airline.utils import AIRLINE_DB_PATH
 

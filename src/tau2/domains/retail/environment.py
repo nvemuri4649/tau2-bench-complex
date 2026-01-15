@@ -10,6 +10,7 @@ from tau2.domains.retail.utils import (
     RETAIL_DB_PATH,
     RETAIL_POLICY_PATH,
     RETAIL_TASK_SET_PATH,
+    RETAIL_COMPLEX_TASK_SET_PATH,
 )
 from tau2.environment.environment import Environment
 from tau2.utils import load_file
@@ -34,6 +35,27 @@ def get_environment(
 
 
 def get_tasks(task_split_name: Optional[str] = "base") -> list[Task]:
+    """Get tasks for the retail domain.
+    
+    Args:
+        task_split_name: The name of the task split to load.
+            - "base", "train", "test": Standard task splits from tasks.json
+            - "complex": Load complex tasks from complex_tasks.json
+            - None: Load all tasks from tasks.json
+    
+    Returns:
+        List of Task objects.
+    """
+    # Handle complex tasks specially
+    if task_split_name == "complex":
+        if not RETAIL_COMPLEX_TASK_SET_PATH.exists():
+            raise ValueError(
+                f"Complex tasks file not found at {RETAIL_COMPLEX_TASK_SET_PATH}"
+            )
+        tasks = load_file(RETAIL_COMPLEX_TASK_SET_PATH)
+        return [Task.model_validate(task) for task in tasks]
+    
+    # Standard task loading
     tasks = load_file(RETAIL_TASK_SET_PATH)
     tasks = [Task.model_validate(task) for task in tasks]
     if task_split_name is None:
@@ -41,7 +63,7 @@ def get_tasks(task_split_name: Optional[str] = "base") -> list[Task]:
     task_splits = get_tasks_split()
     if task_split_name not in task_splits:
         raise ValueError(
-            f"Invalid task split name: {task_split_name}. Valid splits are: {task_splits.keys()}"
+            f"Invalid task split name: {task_split_name}. Valid splits are: {list(task_splits.keys())} or 'complex'"
         )
     tasks = [task for task in tasks if task.id in task_splits[task_split_name]]
     return tasks

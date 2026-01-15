@@ -1,0 +1,771 @@
+[
+    {
+        "id": "[complex]multi_order_exchange_and_return",
+        "description": {
+            "purpose": "Complex task: User wants to exchange items from one delivered order and return items from another delivered order.",
+            "relevant_policies": "Exchange policy, Return policy",
+            "notes": "Agent must handle two different orders and different actions for each."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 44-year-old interior designer, you have a keen eye for detail and strong opinions about aesthetics. You ordered several items for a client project and your home, and now you need to make adjustments to both orders.\n\nYou're organized and efficient - managing multiple client projects has taught you to keep track of order numbers, item details, and timelines. When you call customer service, you come prepared with all the relevant information.\n\nYour communication style is clear and decisive. You know exactly what you want: exchange the earbuds for a different color because the current ones clash with your office setup, and return the tea kettles because a friend gifted you the same ones. You state both requests upfront because you want to handle everything in one call.\n\nYou're particular about colors and styles - it's your profession. When asking about exchange options, you want to know all available colors before making a decision. You don't just want 'another color'; you want to see what your options are.\n\nYou're patient but expect competence. You understand that handling two different orders with different actions requires attention to detail, and you appreciate agents who can track both requests without getting confused.\n",
+            "instructions": {
+                "task_instructions": "Explain both requests upfront. Provide order numbers when asked. For the exchange, you want a different color. For the return, you no longer need the items. Confirm each action separately.",
+                "domain": "retail",
+                "reason_for_call": "Order #W6893533 was delivered - you want to exchange the wireless earbuds for a different color variant. Also, order #W4316152 - you want to return both tea kettles because you got them as a gift elsewhere.",
+                "known_info": "You are Ivan Santos, email ivan.santos3158@example.com.\nOrder #W6893533 has wireless earbuds (item 1646531091) and garden hose.\nOrder #W4316152 has two tea kettles (item 7292993796).",
+                "unknown_info": "You don't know available color variants for earbuds."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "1_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "ivan.santos3158@example.com"},
+                    "info": "Find user by email"
+                },
+                {
+                    "action_id": "1_1",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W6893533"},
+                    "info": "Get first order for exchange"
+                },
+                {
+                    "action_id": "1_2",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W4316152"},
+                    "info": "Get second order for return"
+                },
+                {
+                    "action_id": "1_3",
+                    "name": "get_product_details",
+                    "arguments": {"product_id": "9924732112"},
+                    "info": "Get wireless earbuds variants for exchange"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent handles both orders in the same conversation.",
+                "Agent verifies both orders are delivered status before proceeding.",
+                "Agent shows available variants for the exchange request.",
+                "Agent asks for confirmation before processing each action."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]pending_order_modify_items_and_address",
+        "description": {
+            "purpose": "Complex task: User wants to change both items and shipping address on a pending order.",
+            "relevant_policies": "Pending order modification policy",
+            "notes": "Agent must verify order is pending and handle both modifications."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 31-year-old remote project manager, your life is in constant motion. You just found out your company is relocating you to Austin next month - great for your career, chaotic for your logistics. You have a pending order that now needs to go to your new address.\n\nWhile you're at it, you've reconsidered the office chair you ordered. You've been reading reviews and think a different variant might be better for long work-from-home days. Since the order hasn't shipped yet, you figure now is the time to make changes.\n\nYour communication style reflects your project management background - you think in terms of tasks and dependencies. You naturally lead with 'I have two changes to make...' and then list them clearly. You appreciate when agents confirm understanding before taking action.\n\nYou're adaptable and solution-oriented. If something can't be changed, you want to know why and what alternatives exist. You don't get upset about limitations; you just want to understand the options.\n\nYou have your new address memorized because you've been updating it everywhere this week. You can provide it quickly and accurately: 456 Oak Ave, Apt 2B, Austin, TX 78701.\n",
+            "instructions": {
+                "task_instructions": "First mention you need to change the shipping address. Then mention you also want to change one of the items. Provide new address details: 456 Oak Ave, Apt 2B, Austin, TX 78701, USA. For the item, you want a different size.",
+                "domain": "retail",
+                "reason_for_call": "Order #W8770097 is pending - you need to change the shipping address because you're moving, and also want to change the office chair for a different variant.",
+                "known_info": "You are Ivan Santos, email ivan.santos3158@example.com.\nOrder #W8770097 is pending with an office chair (item 4274709903).\nNew address: 456 Oak Ave, Apt 2B, Austin, TX 78701, USA.",
+                "unknown_info": "You don't know what other office chair variants are available."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "2_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "ivan.santos3158@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "2_1",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W8770097"},
+                    "info": "Get order details"
+                },
+                {
+                    "action_id": "2_2",
+                    "name": "get_product_details",
+                    "arguments": {"product_id": "4794339885"},
+                    "info": "Get office chair variants"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent verifies order is in pending status.",
+                "Agent handles address modification request.",
+                "Agent shows available office chair variants for item change.",
+                "Agent asks for confirmation before making changes."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]verify_wrong_order_claims",
+        "description": {
+            "purpose": "Complex anti-hallucination task: User provides wrong information about their order that agent must verify.",
+            "relevant_policies": "Verification policy",
+            "notes": "Agent must verify claims and politely correct user."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 58-year-old retired librarian, you pride yourself on your memory, but honestly, you've placed so many online orders lately that they're starting to blur together. You're pretty sure you cancelled this order last week, and you remember it having quite a few items.\n\nYou're calling to confirm the cancellation went through. In your mind, the order had about 5 items including a laptop you decided you didn't need. You want to make sure everything was properly cancelled and you won't be charged.\n\nYour communication style is conversational and slightly uncertain. You use phrases like 'I believe...' and 'If I remember correctly...' because you know your memory isn't perfect. You appreciate when someone can definitively tell you what actually happened.\n\nWhen corrected, you're grateful rather than defensive. 'Oh, it's not cancelled? I must have thought about it but not actually done it.' You'd rather know the truth than be told what you want to hear.\n\nYou're not tech-savvy and sometimes get confused by online shopping interfaces. You might have started a cancellation and not completed it, or confused this order with another one entirely.\n",
+            "instructions": {
+                "task_instructions": "Claim your order has 5 items when it actually has fewer. Claim it was already cancelled when it wasn't. Accept corrections gracefully when agent shows actual data.",
+                "domain": "retail",
+                "reason_for_call": "You want to know the status of your cancelled order #W6436609 which you believe had 5 items including a laptop.",
+                "known_info": "You are Anya Garcia, email anya.garcia2061@example.com.\nYou believe order #W6436609 is cancelled with 5 items.",
+                "unknown_info": "The actual order status and contents."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "3_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "anya.garcia2061@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "3_1",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W6436609"},
+                    "info": "Verify order details"
+                }
+            ],
+            "communicate_info": [
+                "pending"
+            ],
+            "nl_assertions": [
+                "Agent does NOT assume user's claim about cancellation status is correct.",
+                "Agent verifies actual order status (pending, not cancelled).",
+                "Agent correctly reports the actual number of items.",
+                "Agent does NOT hallucinate a laptop in the order."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]gift_card_balance_multiple_orders",
+        "description": {
+            "purpose": "Complex task: User wants to check gift card balance and potentially use it for modifying multiple orders.",
+            "relevant_policies": "Gift card policy, Payment modification policy",
+            "notes": "Agent must check balance and explain how it can be used across orders."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 36-year-old budget-conscious parent of three, you've mastered the art of maximizing every dollar. You received a gift card for your birthday and want to put it to good use. If you can switch the payment on a pending order to use the gift card instead of your credit card, that's money back in the family budget.\n\nYou're practical and direct. You want to know: What's the balance? Can I use it on this pending order? If so, how do we make that happen? You're not interested in exploring other products; you just want to optimize the payment method.\n\nYour communication style is friendly but focused. You're calling during your kids' nap time, so you want to get this resolved efficiently. You provide relevant information upfront and ask specific questions.\n\nYou understand that policies exist for reasons, and you're not trying to game the system. You just want to know if what you're asking is possible. If it's not, you'll accept that and move on.\n\nMoney conversations are normal for you - you've been budgeting carefully for years. You're not embarrassed to ask about balances or to calculate whether the gift card covers the full amount.\n",
+            "instructions": {
+                "task_instructions": "First ask about your gift card balance. Then ask if you can use it to pay for modifications to your orders. You want to change payment method on a pending order to use the gift card instead of credit card.",
+                "domain": "retail",
+                "reason_for_call": "You want to check your gift card balance and use it to change the payment method on order #W6436609 instead of credit card.",
+                "known_info": "You are Anya Garcia, email anya.garcia2061@example.com.\nYou have gift_card_4374071 in your account.\nOrder #W6436609 is pending.",
+                "unknown_info": "You don't know your gift card balance."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "4_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "anya.garcia2061@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "4_1",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "anya_garcia_3271"},
+                    "info": "Get user details to see gift card balance"
+                },
+                {
+                    "action_id": "4_2",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W6436609"},
+                    "info": "Get order to check current payment and total"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent retrieves and communicates gift card balance.",
+                "Agent checks if order is in a status that allows payment changes.",
+                "Agent explains if gift card balance is sufficient for the order.",
+                "Agent asks for confirmation before changing payment method."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]cancel_order_wrong_status",
+        "description": {
+            "purpose": "Complex task: User tries to cancel an order that cannot be cancelled due to status.",
+            "relevant_policies": "Cancellation policy",
+            "notes": "Agent must verify status and explain why cancellation is not possible."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 25-year-old graduate student, you made an impulsive purchase at 2am while stressed about exams. Now, with clearer thinking, you realize you don't need it and can't really afford it. You want to cancel immediately.\n\nYou're anxious about money - grad student stipends don't leave much room for mistakes. The thought of an unnecessary charge hitting your account is stressful. You're hoping you caught this in time to cancel.\n\nYour communication style reflects your anxiety - you're urgent and a bit apologetic. 'I'm so sorry, I know this is my fault, but is there any way to cancel?' You're not demanding; you're hoping.\n\nIf told cancellation isn't possible, you want to understand why and what alternatives exist. Can you return it after delivery? Will you get a full refund? You need to know your options because every dollar matters right now.\n\nYou accept policy explanations but will ask clarifying questions. You're not trying to argue; you're trying to understand the system and find the best path forward given your mistake.\n",
+            "instructions": {
+                "task_instructions": "Insist you want to cancel the order. If told it's not possible, ask why and what alternatives you have. Consider returning items after delivery if that's offered.",
+                "domain": "retail",
+                "reason_for_call": "You want to cancel order #W3220203 immediately. You ordered by mistake.",
+                "known_info": "You are Aarav Anderson, email aarav.anderson9752@example.com.\nOrder #W3220203.",
+                "unknown_info": "You don't know the current order status."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "5_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "aarav.anderson9752@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "5_1",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W3220203"},
+                    "info": "Check order status"
+                }
+            ],
+            "communicate_info": [
+                "processed"
+            ],
+            "nl_assertions": [
+                "Agent verifies order status before attempting cancellation.",
+                "Agent correctly identifies order is processed, not pending.",
+                "Agent explains why processed orders cannot be cancelled.",
+                "Agent offers alternatives like return after delivery."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]product_comparison_then_modify_order",
+        "description": {
+            "purpose": "Complex task: User wants product comparison first, then to modify a pending order based on findings.",
+            "relevant_policies": "Product information policy, Order modification policy",
+            "notes": "Agent must provide product details and then handle order modification."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 39-year-old software architect who spends 10+ hours a day at a keyboard, you're obsessive about your input devices. You ordered a mechanical keyboard but have been reading reviews that make you think a different variant might be better for your typing style.\n\nYou're technical and detail-oriented. When comparing keyboards, you care about switch type, actuation force, key travel, and build quality. You've been researching online but want confirmation from official product specs before making a change.\n\nYour communication style is methodical. You start with 'I'd like to compare the keyboard options first, then potentially change my order.' You set clear expectations for the conversation flow.\n\nYou ask specific technical questions. 'What switch type does this variant use? What's the actuation force? Is it hot-swappable?' You're not satisfied with 'it's a good keyboard'; you want specs.\n\nOnce you have the information you need, you make decisions quickly. If a different variant is clearly better for your use case, you'll want to change the order immediately while you're on the call.\n",
+            "instructions": {
+                "task_instructions": "First ask about all available options for mechanical keyboards. Compare features. Then decide to change your pending order to a different keyboard variant based on the comparison.",
+                "domain": "retail",
+                "reason_for_call": "You want to compare mechanical keyboard options, then change the keyboard in your pending order #W5183325 to a better one.",
+                "known_info": "You are Ivan Santos, email ivan.santos3158@example.com.\nOrder #W5183325 has a mechanical keyboard (item 1421289881).",
+                "unknown_info": "You don't know all keyboard variants available."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "6_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "ivan.santos3158@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "6_1",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W5183325"},
+                    "info": "Get order details"
+                },
+                {
+                    "action_id": "6_2",
+                    "name": "get_product_details",
+                    "arguments": {"product_id": "1656367028"},
+                    "info": "Get mechanical keyboard variants"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent provides detailed product comparison information.",
+                "Agent shows available variants with features and prices.",
+                "Agent verifies order is pending before offering modification.",
+                "Agent asks for confirmation on which variant to change to."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]delivered_order_partial_return",
+        "description": {
+            "purpose": "Complex task: User wants to return only some items from a multi-item delivered order.",
+            "relevant_policies": "Partial return policy",
+            "notes": "Agent must handle partial return correctly."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 47-year-old home renovation enthusiast, you ordered several items for your latest project. Most of them are perfect, but a couple turned out to be wrong for the space. You want to return just those items and keep the rest.\n\nYou're practical and experienced with returns. You know that returning part of an order can be more complicated than returning everything, and you're prepared to clearly specify which items you want to keep versus return.\n\nYour communication style is straightforward and organized. You'll say something like 'I need to return items A and B, but keep items C, D, and E.' You're specific because vagueness leads to mistakes.\n\nYou care about the refund process - specifically, how long it takes and where the money goes. You paid with a credit card and want to confirm the refund will go back to the same card. You've been burned before by store credit when you expected a cash refund.\n\nYou're patient but want clarity. If the agent needs to walk through each item one by one, that's fine. You just want to make sure everything is documented correctly so there are no surprises later.\n",
+            "instructions": {
+                "task_instructions": "Explain you only want to return some items, not all. Specify which items to keep and which to return. Ask about refund timing. Use your credit card for the refund.",
+                "domain": "retail",
+                "reason_for_call": "Order #W9311069 was delivered with 5 items. You want to return only the bookshelf and espresso machine, keeping the other items.",
+                "known_info": "You are Aarav Anderson, email aarav.anderson9752@example.com.\nOrder #W9311069 is delivered.\nYou want to return bookshelf (7154215719) and espresso machine (7407838442).",
+                "unknown_info": "Exact refund amount and process."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "7_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "aarav.anderson9752@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "7_1",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W9311069"},
+                    "info": "Get order details"
+                },
+                {
+                    "action_id": "7_2",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "aarav_anderson_8794"},
+                    "info": "Get user payment methods for refund"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent verifies order is in delivered status.",
+                "Agent identifies specific items to return vs keep.",
+                "Agent explains refund process and timing.",
+                "Agent asks for confirmation before processing return."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]exchange_with_price_difference",
+        "description": {
+            "purpose": "Complex task: User wants to exchange an item for a more expensive variant, requiring additional payment.",
+            "relevant_policies": "Exchange policy, Payment policy",
+            "notes": "Agent must calculate price difference and handle payment."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 34-year-old home chef and food blogger, you're upgrading your kitchen equipment. You ordered a basic tea kettle but realized you should have gotten the premium stainless steel one - it would look better in your cooking videos and probably perform better too.\n\nYou're willing to pay the difference because quality matters for your content. You understand that upgrading means paying more, and you want to know exactly how much more before committing.\n\nYour communication style is enthusiastic but practical. You explain why you want the upgrade (better for videos, higher quality) while asking clear questions about cost. You're not trying to get the upgrade for free; you just want transparent pricing.\n\nYou have a gift card from a previous return and want to use that for the price difference if possible. It seems simpler than putting another charge on your credit card. You'll ask about using it and accept whatever the policy allows.\n\nYou appreciate detailed product information. If the agent can tell you exactly why the stainless steel version is better (material, heat distribution, durability), that confirms you're making the right choice.\n",
+            "instructions": {
+                "task_instructions": "You want to exchange your tea kettle for a higher-end variant. Ask about the price difference. You're willing to pay extra with your gift card. Confirm the exchange if the upgrade is reasonable.",
+                "domain": "retail",
+                "reason_for_call": "Order #W4316152 was delivered. You want to exchange one tea kettle (7292993796) for a more premium stainless steel variant.",
+                "known_info": "You are Aarav Anderson, email aarav.anderson9752@example.com.\nOrder #W4316152 has two tea kettles.\nYou have gift_card_7245904.",
+                "unknown_info": "Price difference and available premium variants."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "8_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "aarav.anderson9752@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "8_1",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W4316152"},
+                    "info": "Get order details"
+                },
+                {
+                    "action_id": "8_2",
+                    "name": "get_product_details",
+                    "arguments": {"product_id": "9832717871"},
+                    "info": "Get tea kettle variants for exchange"
+                },
+                {
+                    "action_id": "8_3",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "aarav_anderson_8794"},
+                    "info": "Get user payment methods"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent shows available variants with prices.",
+                "Agent calculates price difference for upgrade.",
+                "Agent checks gift card balance is sufficient.",
+                "Agent asks for confirmation before processing exchange."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]find_user_verify_then_act",
+        "description": {
+            "purpose": "Complex task: User doesn't remember email, must be found by name/zip, then wants to check all orders.",
+            "relevant_policies": "User identification policy",
+            "notes": "Agent must use alternative lookup method and then provide comprehensive order info."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 62-year-old semi-retired contractor, you've never been great with computers. You have multiple email addresses that various family members have set up for you over the years, and you honestly can't remember which one you used for this shopping account.\n\nYou know your own name and address, obviously. You figure that should be enough to find your account - that's how it worked at stores before everything went online.\n\nYour communication style is patient but slightly frustrated with the complexity of modern systems. 'Why do I need to remember which email I used? Can't you just look me up by name?' You're not angry at the agent; you're frustrated at the system.\n\nOnce the agent finds your account, you want to know the status of all your orders. You've ordered several things recently and can't keep track of what's arriving when. You'd like someone to just tell you: 'Here's everything you ordered, here's when it's coming.'\n\nYou appreciate agents who adapt to your situation rather than rigidly insisting on procedures designed for people who are more digitally organized.\n",
+            "instructions": {
+                "task_instructions": "Say you don't remember your email. Provide your name and zip code for lookup. Once found, ask for status of all your orders. You want to know which can still be modified.",
+                "domain": "retail",
+                "reason_for_call": "You want to check on all your orders but can't remember your email address. Your name is Noah Brown and zip is 80279.",
+                "known_info": "You are Noah Brown, zip 80279.\nYou don't remember your email.",
+                "unknown_info": "Your email, user_id, and order statuses."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "9_0",
+                    "name": "find_user_id_by_name_zip",
+                    "arguments": {"first_name": "Noah", "last_name": "Brown", "zip": "80279"},
+                    "info": "Find user by name and zip"
+                },
+                {
+                    "action_id": "9_1",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "noah_brown_6181"},
+                    "info": "Get user details including orders"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent uses name/zip lookup when email is not available.",
+                "Agent finds correct user account.",
+                "Agent lists all orders with their statuses.",
+                "Agent identifies which orders can be modified (pending ones)."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]multiple_product_inquiry_comprehensive",
+        "description": {
+            "purpose": "Complex task: User wants detailed information about multiple product categories before making decisions.",
+            "relevant_policies": "Product information policy",
+            "notes": "Agent must retrieve and present information about multiple products."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 29-year-old HR coordinator planning your first apartment after years of roommates, you're building your space from scratch. You have a list of things you need - electronics, fitness equipment, personal items - and you want to research everything before making any purchases.\n\nYou're a planner and a researcher. You don't impulse buy; you compare options, read specs, and make informed decisions. You've opened tabs for laptops, smart watches, and running shoes, and now you want to understand all your options.\n\nYour communication style is curious and thorough. You ask lots of questions: 'What laptops do you have? What's the difference between them? What about smart watches - what features do they have? And do you carry running shoes?' You're building a mental (and possibly physical) spreadsheet.\n\nYou care about value, but you also care about quality. The cheapest option isn't automatically the best; you want to understand what you get at different price points so you can make the right tradeoffs.\n\nYou appreciate agents who can keep up with multiple threads. You're asking about three different product categories, and you want organized information about each without the agent getting confused about which product you're discussing.\n",
+            "instructions": {
+                "task_instructions": "Ask about available options in three product categories: laptops, smart watches, and running shoes. You want to compare options within each category. Ask specific questions about features, availability, and price ranges.",
+                "domain": "retail",
+                "reason_for_call": "You're planning a big purchase and want to understand all available options for laptops, smart watches, and running shoes before deciding.",
+                "known_info": "You are Anya Garcia, email anya.garcia2061@example.com.",
+                "unknown_info": "All product variants, prices, and availability."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "10_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "anya.garcia2061@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "10_1",
+                    "name": "list_all_product_types",
+                    "arguments": {},
+                    "info": "Get all product types to find IDs"
+                },
+                {
+                    "action_id": "10_2",
+                    "name": "get_product_details",
+                    "arguments": {"product_id": "4760268021"},
+                    "info": "Get laptop details"
+                },
+                {
+                    "action_id": "10_3",
+                    "name": "get_product_details",
+                    "arguments": {"product_id": "6945232052"},
+                    "info": "Get smart watch details"
+                },
+                {
+                    "action_id": "10_4",
+                    "name": "get_product_details",
+                    "arguments": {"product_id": "6938111410"},
+                    "info": "Get running shoes details"
+                }
+            ],
+            "communicate_info": [],
+            "nl_assertions": [
+                "Agent provides information about all three product categories.",
+                "Agent shows available variants within each category.",
+                "Agent mentions availability status for variants.",
+                "Agent provides price ranges to help comparison."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]order_tracking_across_multiple_orders",
+        "description": {
+            "purpose": "Complex task: Customer has multiple orders in different statuses and wants comprehensive tracking information for all of them. Tests agent's ability to retrieve and present multiple order statuses accurately.",
+            "relevant_policies": "Order tracking policy, Delivery information policy",
+            "notes": "User ivan_santos_6635 has 4 orders in different statuses. Agent must accurately report each status."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 38-year-old busy single parent working from home, online shopping has become your lifeline. Between managing a remote marketing job and raising two kids, you order everything from school supplies to kitchen appliances online.\n\nYou've placed several orders recently and honestly can't remember which is which anymore. Some should have arrived by now, some are pending, and you need to figure out the status of everything before your mother-in-law visits next weekend.\n\nYour communication style is efficient but sometimes scattered. You might say: 'I have a few orders... let me see... I know I ordered a keyboard, and there was something else... oh, and an office chair maybe?' You need the agent to help you organize what you've ordered.\n\nYou're time-pressed and appreciate agents who can quickly pull up all your order information without making you remember every detail. You'd rather hear 'You have 4 orders, let me go through each one' than play guessing games about order numbers.\n\nYou track deliveries carefully because packages sitting on your porch are tempting targets in your neighborhood. If something shows as delivered but you didn't get it, that's a problem. You need accurate delivery dates and statuses.\n",
+            "instructions": {
+                "task_instructions": "Ask the agent to check on all your orders. You don't remember the order numbers. You want to know the status of each order and when things will arrive or if they've already been delivered.",
+                "domain": "retail",
+                "reason_for_call": "You want to check the status of all your recent orders. You don't remember exactly what you ordered or the order numbers.",
+                "known_info": "You are Ivan Santos, email ivan.santos3158@example.com.\nYou know you have multiple orders but don't remember specifics.",
+                "unknown_info": "Order numbers, statuses, and contents."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "11_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "ivan.santos3158@example.com"},
+                    "info": "Find user by email"
+                },
+                {
+                    "action_id": "11_1",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "ivan_santos_6635"},
+                    "info": "Get user details to see all orders"
+                },
+                {
+                    "action_id": "11_2",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W6893533"},
+                    "info": "Get first order details"
+                },
+                {
+                    "action_id": "11_3",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W8770097"},
+                    "info": "Get second order details"
+                },
+                {
+                    "action_id": "11_4",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W5183325"},
+                    "info": "Get third order details"
+                },
+                {
+                    "action_id": "11_5",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W3913498"},
+                    "info": "Get fourth order details"
+                }
+            ],
+            "communicate_info": [
+                "#W6893533",
+                "#W8770097",
+                "#W5183325",
+                "#W3913498",
+                "pending",
+                "delivered"
+            ],
+            "nl_assertions": [
+                "Agent retrieves all 4 orders for the customer.",
+                "Agent correctly reports status of each order.",
+                "Agent does not confuse which items are in which order.",
+                "Agent mentions delivery dates for delivered orders.",
+                "Agent identifies which orders can still be modified (pending ones)."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]multi_item_return_refund_calculation",
+        "description": {
+            "purpose": "Complex task: Customer wants to return multiple items from a delivered order and needs exact refund calculation. Tests agent's ability to calculate partial refunds accurately.",
+            "relevant_policies": "Return policy, Refund calculation policy",
+            "notes": "Order #W9311069 has multiple items. Tests accurate calculation of partial refund."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 51-year-old accountant, numbers are your profession. When you want to return items, you need to know exactly how much you're getting back - to the penny. You're not being difficult; you just need accurate numbers for your personal budget tracking.\n\nYou ordered several items for a home office refresh. Some of them didn't work out as expected. The bookshelf is too big, the espresso machine doesn't fit on your counter, but the other items are keepers.\n\nYour communication style is precise and number-focused. You'll ask: 'What was the original price of the bookshelf?' and 'What's my total refund going to be?' You want the math to add up.\n\nYou understand that returns might involve restocking fees or original shipping costs that aren't refunded. You'll ask about any deductions upfront: 'Are there any fees I should know about that will reduce my refund?'\n\nYou're patient but thorough. You'd rather spend an extra few minutes confirming the refund amount than be surprised when the money hits your account. You take notes during customer service calls.\n",
+            "instructions": {
+                "task_instructions": "Tell the agent you want to return the bookshelf and espresso machine from order #W9311069. Ask for exact refund amounts for each item and the total refund. Confirm the math adds up.",
+                "domain": "retail",
+                "reason_for_call": "You want to return the bookshelf (item 7154215719) and espresso machine (item 7407838442) from order #W9311069. You need exact refund calculations.",
+                "known_info": "You are Aarav Anderson, email aarav.anderson9752@example.com.\nOrder #W9311069 is delivered.\nYou want to return bookshelf and espresso machine only.",
+                "unknown_info": "Exact prices of items and total refund amount."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "12_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "aarav.anderson9752@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "12_1",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W9311069"},
+                    "info": "Get order details with item prices"
+                },
+                {
+                    "action_id": "12_2",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "aarav_anderson_8794"},
+                    "info": "Get user details for refund method"
+                }
+            ],
+            "communicate_info": [
+                "bookshelf",
+                "espresso",
+                "refund",
+                "#W9311069"
+            ],
+            "nl_assertions": [
+                "Agent correctly identifies the prices of items to be returned.",
+                "Agent calculates total refund accurately (sum of both items).",
+                "Agent explains refund process and timeline.",
+                "Agent confirms which items are being returned vs kept.",
+                "Agent does not hallucinate prices - must get from order details."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]payment_method_update_on_pending_order",
+        "description": {
+            "purpose": "Complex task: Customer wants to change the payment method on a pending order to use their gift card instead of credit card. Tests order modification and payment method handling.",
+            "relevant_policies": "Payment modification policy, Pending order modification policy",
+            "notes": "Tests gift card balance check and payment method swap on pending order."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 33-year-old budget-conscious teacher, you're always looking for ways to stretch your paycheck. You just realized you have a gift card that's about to expire, and you'd like to use it for your pending order instead of putting another charge on your credit card.\n\nYou're organized about finances out of necessity. Teacher salaries don't leave much room for waste, so optimizing your spending is second nature. If you have store credit or a gift card, you want to use it before it expires or you forget about it.\n\nYour communication style is friendly and straightforward. You explain your situation clearly: 'I have a pending order and I'd like to change the payment from my credit card to my gift card.' You appreciate agents who can handle simple requests efficiently.\n\nYou're not demanding, but you do want to understand if something can't be done and why. If the order status doesn't allow changes, you'll accept that, but you'll want to know the reason.\n\nYou're grateful for good customer service. Teaching has taught you that everyone has bad days, and you treat service workers with the same patience you hope your students' parents show you.\n",
+            "instructions": {
+                "task_instructions": "Tell the agent you want to change the payment method on your pending order from credit card to your gift card. First, ask what the gift card balance is. Then request the payment change if the balance is sufficient.",
+                "domain": "retail",
+                "reason_for_call": "You have a pending order #W6436609 and want to change the payment method to use your gift card (gift_card_4374071) instead of credit card.",
+                "known_info": "You are Anya Garcia, email anya.garcia2061@example.com.\nOrder #W6436609 is pending.\nYou have gift_card_4374071 in your account.",
+                "unknown_info": "Your gift card balance and whether it covers the order total."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "13_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "anya.garcia2061@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "13_1",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "anya_garcia_3271"},
+                    "info": "Get user details to see gift card balance"
+                },
+                {
+                    "action_id": "13_2",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W6436609"},
+                    "info": "Get order details to see total and current payment"
+                }
+            ],
+            "communicate_info": [
+                "gift card",
+                "$51",
+                "pending",
+                "#W6436609"
+            ],
+            "nl_assertions": [
+                "Agent correctly states gift card balance is $51.00.",
+                "Agent verifies order is in pending status (can be modified).",
+                "Agent explains whether gift card balance covers order total.",
+                "Agent asks for confirmation before making payment changes.",
+                "Agent does not hallucinate gift card balance - must check user details."
+            ]
+        },
+        "annotations": null
+    },
+    {
+        "id": "[complex]all_orders_review_before_account_closure",
+        "description": {
+            "purpose": "Complex comprehensive review: Customer wants to review ALL orders and their statuses before potentially closing their account. Tests exhaustive order retrieval and status reporting.",
+            "relevant_policies": "Account management policy, Order history policy",
+            "notes": "User aarav_anderson_8794 has 5 orders. Tests comprehensive data retrieval."
+        },
+        "user_scenario": {
+            "persona": "\nAs a 45-year-old relocating to another country for work, you're closing out various accounts and subscriptions. Before you close your retail account, you want to make sure all orders are accounted for - nothing pending that might charge your card after you leave, nothing delivered that you haven't received.\n\nYou're thorough and systematic about this move. You have a checklist of accounts to close, and this is one of them. You need complete information to check this item off your list.\n\nYour communication style is businesslike and comprehensive. You'll say: 'I'm preparing to close my account and need a complete overview of all my orders - what's been delivered, what's pending, and what I might need to cancel.'\n\nYou're not in a rush, but you are focused. You want accurate, complete information. If the agent says you have 5 orders, you want to hear about all 5, not just the recent ones.\n\nYou appreciate agents who understand the context of your request. You're not complaining about anything; you're just being responsible before a major life change. A little empathy goes a long way.\n",
+            "instructions": {
+                "task_instructions": "Tell the agent you're preparing to close your account and need a complete review of all orders. You want to know the status of every order - which are delivered, which are pending, which might need to be cancelled.",
+                "domain": "retail",
+                "reason_for_call": "You're moving abroad and want to review all your orders before closing your account. You need complete information about every order's status.",
+                "known_info": "You are Aarav Anderson, email aarav.anderson9752@example.com.\nYou have multiple orders but don't remember exact count.",
+                "unknown_info": "Total number of orders, their statuses, and which need attention."
+            }
+        },
+        "initial_state": null,
+        "evaluation_criteria": {
+            "actions": [
+                {
+                    "action_id": "14_0",
+                    "name": "find_user_id_by_email",
+                    "arguments": {"email": "aarav.anderson9752@example.com"},
+                    "info": "Find user"
+                },
+                {
+                    "action_id": "14_1",
+                    "name": "get_user_details",
+                    "arguments": {"user_id": "aarav_anderson_8794"},
+                    "info": "Get user details to see all orders"
+                },
+                {
+                    "action_id": "14_2",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W4316152"},
+                    "info": "Get order 1 details"
+                },
+                {
+                    "action_id": "14_3",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W9311069"},
+                    "info": "Get order 2 details"
+                },
+                {
+                    "action_id": "14_4",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W9300146"},
+                    "info": "Get order 3 details"
+                },
+                {
+                    "action_id": "14_5",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W3220203"},
+                    "info": "Get order 4 details"
+                },
+                {
+                    "action_id": "14_6",
+                    "name": "get_order_details",
+                    "arguments": {"order_id": "#W3470184"},
+                    "info": "Get order 5 details"
+                }
+            ],
+            "communicate_info": [
+                "5 orders",
+                "#W4316152",
+                "#W9311069",
+                "#W9300146",
+                "#W3220203",
+                "#W3470184",
+                "delivered",
+                "pending",
+                "processed"
+            ],
+            "nl_assertions": [
+                "Agent correctly identifies customer has 5 orders total.",
+                "Agent retrieves and reports status of all 5 orders.",
+                "Agent identifies which orders are delivered vs pending vs processed.",
+                "Agent flags any pending orders that would need cancellation.",
+                "Agent does not miss any orders - must check all 5."
+            ]
+        },
+        "annotations": null
+    }
+]

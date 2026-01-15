@@ -9,6 +9,7 @@ from tau2.domains.telecom.tools import TelecomTools
 from tau2.domains.telecom.user_data_model import PaymentRequest, TelecomUserDB
 from tau2.domains.telecom.user_tools import TelecomUserTools
 from tau2.domains.telecom.utils import (
+    TELECOM_COMPLEX_TASK_SET_PATH,
     TELECOM_DB_PATH,
     TELECOM_MAIN_POLICY_PATH,
     TELECOM_MAIN_POLICY_SOLO_PATH,
@@ -168,8 +169,16 @@ def load_tasks_split(path: str) -> Optional[dict[str, list[str]]]:
 
 
 def get_tasks(task_split_name: Optional[str] = "base") -> list[Task]:
+    # Load main tasks
     tasks = load_tasks(TELECOM_TASK_SET_PATH)
     tasks = [Task.model_validate(task) for task in tasks]
+    
+    # Load complex tasks if they exist
+    if TELECOM_COMPLEX_TASK_SET_PATH.exists():
+        complex_tasks = load_tasks(TELECOM_COMPLEX_TASK_SET_PATH)
+        complex_tasks = [Task.model_validate(task) for task in complex_tasks]
+        tasks.extend(complex_tasks)
+    
     if task_split_name is None:
         return tasks
     task_splits = get_tasks_split()
@@ -181,7 +190,15 @@ def get_tasks(task_split_name: Optional[str] = "base") -> list[Task]:
 
 
 def get_tasks_split() -> dict[str, list[str]]:
-    return load_tasks_split(TELECOM_TASK_SET_PATH)
+    splits = load_tasks_split(TELECOM_TASK_SET_PATH)
+    
+    # Add complex task split dynamically
+    if TELECOM_COMPLEX_TASK_SET_PATH.exists():
+        complex_tasks = load_tasks(TELECOM_COMPLEX_TASK_SET_PATH)
+        complex_task_ids = [task.id for task in complex_tasks]
+        splits["complex"] = complex_task_ids
+    
+    return splits
 
 
 # Legacy functions for backward compatibility

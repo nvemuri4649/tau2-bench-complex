@@ -1151,3 +1151,70 @@ class TelecomUserTools(ToolKitBase):
         Assert that the mobile data usage exceeded status is as expected.
         """
         return self.surroundings.mobile_data_usage_exceeded == expected_status
+
+    def assert_airplane_mode(self, expected_mode: bool) -> bool:
+        """
+        Assert that airplane mode is on or off as expected.
+        
+        Args:
+            expected_mode: True if airplane mode should be on, False if off.
+        
+        Returns:
+            True if the airplane mode status matches expected.
+        """
+        return self.device.airplane_mode == expected_mode
+
+    def assert_sim_status(self, expected_status: str) -> bool:
+        """
+        Assert that the SIM card status matches expected.
+        
+        Args:
+            expected_status: Expected SIM status (e.g., 'Ready', 'Not Inserted', 'Error').
+        
+        Returns:
+            True if the SIM status matches expected.
+        """
+        actual_status = self._check_sim_status()
+        return actual_status.value == expected_status
+
+    def assert_network_connected(self) -> bool:
+        """
+        Assert that the phone has network connectivity.
+        
+        Returns:
+            True if connected to cellular network, False otherwise.
+        """
+        network_status = self._check_network_status()
+        return (
+            network_status["connection_status"] == NetworkStatus.CONNECTED
+            and network_status["sim_status"] == SimStatus.READY
+            and not network_status["airplane_mode"]
+        )
+
+    def assert_vpn_connected(self, expected_connected: bool) -> bool:
+        """
+        Assert that VPN connection status matches expected.
+        
+        Args:
+            expected_connected: True if VPN should be connected, False if disconnected.
+        
+        Returns:
+            True if VPN status matches expected.
+        """
+        return self.device.vpn_connected == expected_connected
+
+    @is_tool(ToolType.WRITE)
+    def accept_payment_request(self) -> str:
+        """
+        Accepts and processes a pending payment request from the agent.
+        You must first check the payment request before accepting.
+        """
+        payment_request = self._check_payment_request()
+        if payment_request is None:
+            return "No payment request to accept. The agent must send a payment request first."
+        
+        if payment_request.paid:
+            return f"Payment for bill {payment_request.bill_id} has already been processed."
+        
+        payment_request.paid = True
+        return f"Payment request accepted. Payment of ${payment_request.amount_due:.2f} for bill {payment_request.bill_id} has been authorized."
