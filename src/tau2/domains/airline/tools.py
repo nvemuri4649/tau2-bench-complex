@@ -1,7 +1,13 @@
 """Toolkit for the airline reservation system."""
 
+import functools
+import json
+import os
+import random
+import uuid
 from copy import deepcopy
-from typing import List, Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
@@ -26,7 +32,252 @@ from tau2.domains.airline.data_model import (
 )
 from tau2.environment.toolkit import ToolKitBase, ToolType, is_tool
 
-# TODO: Add an abstract base class for the tools
+# ============================================================================
+# VERBOSE RESPONSE CONFIGURATION
+# ============================================================================
+# Environment variable to enable/disable verbose responses
+# Set TAU2_VERBOSE_RESPONSES=1 to enable, TAU2_VERBOSE_RESPONSES=0 to disable
+VERBOSE_RESPONSES_ENABLED = os.environ.get("TAU2_VERBOSE_RESPONSES", "0") == "1"
+
+# Target: Stay well under 128k context window
+# With ~15 tool calls, need ~3k tokens per response = ~45k total
+VERBOSE_TARGET_TOKENS_PER_RESPONSE = 12000  # ~3k actual tokens per response
+VERBOSE_TARGET_CHARS = VERBOSE_TARGET_TOKENS_PER_RESPONSE * 4
+
+
+def _generate_airline_audit_log(entity_id: str, entity_type: str, num_entries: int = 300) -> List[Dict]:
+    """Generate realistic airline system audit log entries."""
+    actions = [
+        "FARE_QUOTE_REQUESTED", "SEAT_AVAILABILITY_CHECK", "PNR_CREATED", "PNR_MODIFIED",
+        "TICKET_ISSUED", "TICKET_VOIDED", "FARE_RULE_LOOKUP", "SCHEDULE_CHANGE_DETECTED",
+        "PASSENGER_NAME_CORRECTION", "FREQUENT_FLYER_LOOKUP", "BAGGAGE_ALLOWANCE_CHECK",
+        "SPECIAL_SERVICE_REQUEST", "MEAL_PREFERENCE_SET", "WHEELCHAIR_REQUEST", "PET_IN_CABIN",
+        "UNACCOMPANIED_MINOR_CHECK", "VISA_REQUIREMENT_LOOKUP", "COVID_DOCUMENT_CHECK",
+        "SEAT_MAP_DISPLAYED", "UPGRADE_ELIGIBILITY_CHECK", "STANDBY_LIST_UPDATE",
+        "GATE_CHANGE_NOTIFICATION", "DELAY_COMPENSATION_CALC", "REBOOKING_OPTIONS_SEARCH"
+    ]
+    services = ["amadeus-gds", "sabre-gds", "apollo-gds", "worldspan-gds", "fare-engine", 
+                "inventory-mgmt", "departure-control", "loyalty-system", "payment-gateway"]
+    entries = []
+    base_time = datetime(2025, 2, 25, 10, 0, 0)
+    for i in range(num_entries):
+        entry_time = base_time - timedelta(hours=i * 2, minutes=random.randint(0, 59))
+        entries.append({
+            "log_id": str(uuid.uuid4()),
+            "timestamp": entry_time.isoformat() + "Z",
+            "entity_id": entity_id,
+            "entity_type": entity_type,
+            "action": random.choice(actions),
+            "service": random.choice(services),
+            "pcc": random.choice(["1A2B", "3C4D", "5E6F", "7G8H"]),
+            "agent_id": f"AGT{random.randint(10000, 99999)}",
+            "gds_response_ms": random.randint(50, 500),
+            "cache_hit": random.choice([True, False]),
+            "fare_basis": f"{random.choice(['Y', 'B', 'M', 'H', 'Q', 'V'])}{random.randint(1, 99):02d}",
+            "booking_class": random.choice(["Y", "B", "M", "H", "Q", "V", "W", "S", "T", "L", "K"]),
+        })
+    return entries
+
+
+def _generate_similar_reservations(actual_pnr: str, actual_name: str) -> List[Dict]:
+    """Generate confounding similar reservation data."""
+    first_names = ["John", "Jane", "James", "Jennifer", "Joseph", "Jessica", "Jacob", "Julia"]
+    last_names = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Davis", "Miller", "Wilson"]
+    statuses = ["confirmed", "ticketed", "cancelled", "no_show", "checked_in"]
+    
+    similar_reservations = []
+    name_parts = actual_name.split() if actual_name else ["Unknown", "User"]
+    first_initial = name_parts[0][0] if name_parts else "J"
+    
+    for i in range(8):
+        similar_first = random.choice([n for n in first_names if n.startswith(first_initial)])
+        similar_last = random.choice(last_names)
+        pnr_base = actual_pnr[:3] if actual_pnr else "ABC"
+        
+        similar_reservations.append({
+            "pnr": f"{pnr_base}{random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ')}{random.randint(10, 99)}",
+            "passenger_name": f"{similar_last}/{similar_first}",
+            "status": random.choice(statuses),
+            "route": f"{random.choice(['JFK', 'LAX', 'ORD', 'DFW'])}-{random.choice(['SFO', 'MIA', 'SEA', 'BOS'])}",
+            "travel_date": f"2025-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}",
+            "similarity_score": round(random.uniform(0.65, 0.89), 2),
+            "match_type": random.choice(["name_partial", "route_match", "date_proximity", "frequent_flyer_link"]),
+            "_note": "Similar record found in system - verify correct passenger before proceeding"
+        })
+    return similar_reservations
+
+
+def _generate_similar_flights(actual_flight: str, actual_date: str) -> List[Dict]:
+    """Generate confounding similar flight data."""
+    airlines = ["AA", "UA", "DL", "WN", "AS", "B6", "NK", "F9"]
+    statuses = ["On Time", "Delayed", "Cancelled", "Boarding", "Departed", "Arrived"]
+    
+    similar_flights = []
+    for i in range(6):
+        flight_num = random.randint(100, 9999)
+        similar_flights.append({
+            "flight_number": f"{random.choice(airlines)}{flight_num}",
+            "date": actual_date,
+            "origin": random.choice(["JFK", "LAX", "ORD", "DFW", "SFO", "MIA"]),
+            "destination": random.choice(["SEA", "BOS", "ATL", "DEN", "PHX", "IAH"]),
+            "departure_time": f"{random.randint(6, 22):02d}:{random.randint(0, 59):02d}",
+            "status": random.choice(statuses),
+            "equipment": random.choice(["B737", "A320", "B777", "A321", "E175"]),
+            "seats_available": {
+                "basic_economy": random.randint(0, 30),
+                "economy": random.randint(0, 50),
+                "business": random.randint(0, 12)
+            },
+            "_note": "Other flights on same date - ensure correct flight selected"
+        })
+    return similar_flights
+
+
+def _generate_fare_history(entity_id: str, num_entries: int = 50) -> List[Dict]:
+    """Generate fare history and price tracking data."""
+    fare_bases = ["Y26", "B14", "M7", "H21", "Q35", "V42", "W11", "S28", "T15", "L33"]
+    entries = []
+    base_price = random.randint(150, 800)
+    
+    for i in range(num_entries):
+        price_change = random.randint(-50, 50)
+        entries.append({
+            "record_id": str(uuid.uuid4()),
+            "entity_id": entity_id,
+            "timestamp": f"2025-02-{max(1, 25-i):02d}T{random.randint(0, 23):02d}:{random.randint(0, 59):02d}:00Z",
+            "fare_basis": random.choice(fare_bases),
+            "base_fare": base_price + price_change,
+            "taxes_fees": random.randint(30, 100),
+            "total_price": base_price + price_change + random.randint(30, 100),
+            "currency": "USD",
+            "inventory_status": random.choice(["available", "limited", "waitlist"]),
+            "booking_class_availability": random.randint(0, 9),
+            "pricing_source": random.choice(["published", "negotiated", "web_fare", "consolidator"]),
+        })
+    return entries
+
+
+def _generate_verbose_padding_airline(entity_id: str, entity_type: str) -> Dict:
+    """Generate airline-specific verbose padding with confounding data."""
+    padding = {
+        "_audit_log": _generate_airline_audit_log(entity_id, entity_type, num_entries=200),
+        "_fare_history": _generate_fare_history(entity_id, num_entries=30),
+        "_system_diagnostics": {
+            "gds_connection_status": "active",
+            "last_sync_time": "2025-02-25T12:05:00Z",
+            "cache_status": {"hit_rate": 0.87, "entries": 45023, "ttl_seconds": 300},
+            "inventory_feed": {"status": "synchronized", "lag_seconds": 2},
+            "fare_filing_status": {"last_update": "2025-02-25T06:00:00Z", "pending_changes": 142}
+        },
+        "_compliance_flags": {
+            "dot_compliance": True,
+            "eu261_applicable": False,
+            "tsa_secure_flight": True,
+            "apis_required": True,
+            "eta_required": False
+        },
+        "_internal_metadata": {
+            "response_generated_at": datetime.now().isoformat() + "Z",
+            "processing_pipeline": [
+                {"stage": "request_validation", "duration_ms": 3, "status": "success"},
+                {"stage": "pnr_retrieval", "duration_ms": 45, "status": "success"},
+                {"stage": "fare_calculation", "duration_ms": 120, "status": "success"},
+                {"stage": "inventory_check", "duration_ms": 67, "status": "success"},
+                {"stage": "response_formatting", "duration_ms": 8, "status": "success"},
+            ],
+            "gds_transactions": random.randint(3, 12),
+            "api_version": "v2.4.1"
+        }
+    }
+    return padding
+
+
+def add_verbose_padding_airline(func):
+    """Decorator that adds verbose padding to airline tool responses."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        
+        if not VERBOSE_RESPONSES_ENABLED:
+            return result
+            
+        # Convert Pydantic models or other objects to dict if needed
+        if hasattr(result, 'model_dump'):
+            result = result.model_dump()
+        elif hasattr(result, '__dict__') and not isinstance(result, dict):
+            result = {"data": str(result)}
+        elif isinstance(result, list):
+            result = {"results": result}
+        elif not isinstance(result, dict):
+            result = {"value": result}
+        
+        # Extract entity info
+        entity_id = result.get('reservation_id') or result.get('user_id') or \
+                   result.get('flight_number') or str(uuid.uuid4())[:8]
+        entity_type = result.get('_entity_type', 'reservation')
+        
+        # Add verbose padding
+        result.update(_generate_verbose_padding_airline(str(entity_id), entity_type))
+        
+        return result
+    
+    return wrapper
+
+
+def add_confounding_reservations(func):
+    """Decorator that adds confounding similar reservations to responses."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        
+        if not VERBOSE_RESPONSES_ENABLED:
+            return result
+            
+        if hasattr(result, 'model_dump'):
+            result = result.model_dump()
+        elif not isinstance(result, dict):
+            return result
+            
+        pnr = result.get('reservation_id', 'UNKNOWN')
+        # Try to get passenger name
+        passengers = result.get('passengers', [])
+        name = passengers[0].get('first_name', 'Unknown') + " " + passengers[0].get('last_name', 'User') if passengers else "Unknown User"
+        
+        result['_similar_reservations_found'] = _generate_similar_reservations(pnr, name)
+        result['_search_notes'] = "Multiple similar PNRs found in system. Exact match returned based on PNR locator. Review _similar_reservations_found for potential duplicates or related bookings."
+        
+        return result
+    
+    return wrapper
+
+
+def add_confounding_flights(func):
+    """Decorator that adds confounding similar flights to search results."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        
+        if not VERBOSE_RESPONSES_ENABLED:
+            return result
+        
+        # Get date from kwargs or args
+        date = kwargs.get('date', '2025-02-25')
+        
+        if isinstance(result, list):
+            result = {
+                "matching_flights": result,
+                "_other_flights_same_day": _generate_similar_flights("", date),
+                "_search_metadata": {
+                    "search_timestamp": datetime.now().isoformat() + "Z",
+                    "total_flights_scanned": random.randint(200, 500),
+                    "filters_applied": ["route", "date", "availability"],
+                    "cache_used": random.choice([True, False])
+                }
+            }
+        
+        return result
+    
+    return wrapper
 
 
 class AirlineTools(ToolKitBase):  # Tools
@@ -368,7 +619,9 @@ class AirlineTools(ToolKitBase):  # Tools
         return reservation
 
     @is_tool(ToolType.READ)
-    def get_reservation_details(self, reservation_id: str) -> Reservation:
+    @add_verbose_padding_airline
+    @add_confounding_reservations
+    def get_reservation_details(self, reservation_id: str):
         """
         Get the details of a reservation.
 
@@ -381,10 +634,12 @@ class AirlineTools(ToolKitBase):  # Tools
         Raises:
             ValueError: If the reservation is not found.
         """
-        return self._get_reservation(reservation_id)
+        reservation = self._get_reservation(reservation_id)
+        return reservation.model_dump() if hasattr(reservation, 'model_dump') else reservation
 
     @is_tool(ToolType.READ)
-    def get_user_details(self, user_id: str) -> User:
+    @add_verbose_padding_airline
+    def get_user_details(self, user_id: str):
         """
         Get the details of a user, including their reservations.
 
@@ -397,7 +652,8 @@ class AirlineTools(ToolKitBase):  # Tools
         Raises:
             ValueError: If the user is not found.
         """
-        return self._get_user(user_id)
+        user = self._get_user(user_id)
+        return user.model_dump() if hasattr(user, 'model_dump') else user
 
     @is_tool(ToolType.READ)
     def list_all_airports(self) -> AirportInfo:  # DONE
@@ -430,9 +686,10 @@ class AirlineTools(ToolKitBase):  # Tools
         ]
 
     @is_tool(ToolType.READ)
+    @add_confounding_flights
     def search_direct_flight(
         self, origin: str, destination: str, date: str
-    ) -> list[DirectFlight]:
+    ):
         """
         Search for direct flights between two cities on a specific date.
 
@@ -444,14 +701,17 @@ class AirlineTools(ToolKitBase):  # Tools
         Returns:
             The direct flights between the two cities on the specific date.
         """
-        return self._search_direct_flight(
+        flights = self._search_direct_flight(
             date=date, origin=origin, destination=destination
         )
+        # Convert to dicts for verbose padding
+        return [f.model_dump() if hasattr(f, 'model_dump') else f for f in flights]
 
     @is_tool(ToolType.READ)
+    @add_confounding_flights
     def search_onestop_flight(
         self, origin: str, destination: str, date: str
-    ) -> list[tuple[DirectFlight, DirectFlight]]:
+    ):
         """
         Search for one-stop flights between two cities on a specific date.
 
@@ -481,7 +741,10 @@ class AirlineTools(ToolKitBase):  # Tools
                 leave_after=result1.scheduled_arrival_time_est,
             ):
                 result2.date = date2
-                results.append([result1, result2])
+                # Convert to dicts
+                r1 = result1.model_dump() if hasattr(result1, 'model_dump') else result1
+                r2 = result2.model_dump() if hasattr(result2, 'model_dump') else result2
+                results.append([r1, r2])
         return results
 
     @is_tool(ToolType.WRITE)

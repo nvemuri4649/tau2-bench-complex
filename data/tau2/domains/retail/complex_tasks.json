@@ -22,25 +22,33 @@
                 {
                     "action_id": "1_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "ivan.santos3158@example.com"},
+                    "arguments": {
+                        "email": "ivan.santos3158@example.com"
+                    },
                     "info": "Find user by email"
                 },
                 {
                     "action_id": "1_1",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W6893533"},
+                    "arguments": {
+                        "order_id": "#W6893533"
+                    },
                     "info": "Get first order for exchange"
                 },
                 {
                     "action_id": "1_2",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W4316152"},
+                    "arguments": {
+                        "order_id": "#W4316152"
+                    },
                     "info": "Get second order for return"
                 },
                 {
                     "action_id": "1_3",
                     "name": "get_product_details",
-                    "arguments": {"product_id": "9924732112"},
+                    "arguments": {
+                        "product_id": "9924732112"
+                    },
                     "info": "Get wireless earbuds variants for exchange"
                 }
             ],
@@ -50,6 +58,9 @@
                 "Agent verifies both orders are delivered status before proceeding.",
                 "Agent shows available variants for the exchange request.",
                 "Agent asks for confirmation before processing each action."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -77,19 +88,25 @@
                 {
                     "action_id": "2_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "ivan.santos3158@example.com"},
+                    "arguments": {
+                        "email": "ivan.santos3158@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
                     "action_id": "2_1",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W8770097"},
+                    "arguments": {
+                        "order_id": "#W8770097"
+                    },
                     "info": "Get order details"
                 },
                 {
                     "action_id": "2_2",
                     "name": "get_product_details",
-                    "arguments": {"product_id": "4794339885"},
+                    "arguments": {
+                        "product_id": "4794339885"
+                    },
                     "info": "Get office chair variants"
                 }
             ],
@@ -99,6 +116,9 @@
                 "Agent handles address modification request.",
                 "Agent shows available office chair variants for item change.",
                 "Agent asks for confirmation before making changes."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -126,13 +146,17 @@
                 {
                     "action_id": "3_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "anya.garcia2061@example.com"},
+                    "arguments": {
+                        "email": "anya.garcia2061@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
                     "action_id": "3_1",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W6436609"},
+                    "arguments": {
+                        "order_id": "#W6436609"
+                    },
                     "info": "Verify order details"
                 }
             ],
@@ -144,6 +168,10 @@
                 "Agent verifies actual order status (pending, not cancelled).",
                 "Agent correctly reports the actual number of items.",
                 "Agent does NOT hallucinate a laptop in the order."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -171,19 +199,25 @@
                 {
                     "action_id": "4_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "anya.garcia2061@example.com"},
+                    "arguments": {
+                        "email": "anya.garcia2061@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
                     "action_id": "4_1",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "anya_garcia_3271"},
+                    "arguments": {
+                        "user_id": "anya_garcia_3271"
+                    },
                     "info": "Get user details to see gift card balance"
                 },
                 {
                     "action_id": "4_2",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W6436609"},
+                    "arguments": {
+                        "order_id": "#W6436609"
+                    },
                     "info": "Get order to check current payment and total"
                 }
             ],
@@ -193,6 +227,9 @@
                 "Agent checks if order is in a status that allows payment changes.",
                 "Agent explains if gift card balance is sufficient for the order.",
                 "Agent asks for confirmation before changing payment method."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -220,13 +257,17 @@
                 {
                     "action_id": "5_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "aarav.anderson9752@example.com"},
+                    "arguments": {
+                        "email": "aarav.anderson9752@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
                     "action_id": "5_1",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W3220203"},
+                    "arguments": {
+                        "order_id": "#W3220203"
+                    },
                     "info": "Check order status"
                 }
             ],
@@ -238,6 +279,10 @@
                 "Agent correctly identifies order is processed, not pending.",
                 "Agent explains why processed orders cannot be cancelled.",
                 "Agent offers alternatives like return after delivery."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -265,19 +310,25 @@
                 {
                     "action_id": "6_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "ivan.santos3158@example.com"},
+                    "arguments": {
+                        "email": "ivan.santos3158@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
                     "action_id": "6_1",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W5183325"},
+                    "arguments": {
+                        "order_id": "#W5183325"
+                    },
                     "info": "Get order details"
                 },
                 {
                     "action_id": "6_2",
                     "name": "get_product_details",
-                    "arguments": {"product_id": "1656367028"},
+                    "arguments": {
+                        "product_id": "1656367028"
+                    },
                     "info": "Get mechanical keyboard variants"
                 }
             ],
@@ -287,6 +338,9 @@
                 "Agent shows available variants with features and prices.",
                 "Agent verifies order is pending before offering modification.",
                 "Agent asks for confirmation on which variant to change to."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -314,19 +368,25 @@
                 {
                     "action_id": "7_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "aarav.anderson9752@example.com"},
+                    "arguments": {
+                        "email": "aarav.anderson9752@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
                     "action_id": "7_1",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W9311069"},
+                    "arguments": {
+                        "order_id": "#W9311069"
+                    },
                     "info": "Get order details"
                 },
                 {
                     "action_id": "7_2",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "aarav_anderson_8794"},
+                    "arguments": {
+                        "user_id": "aarav_anderson_8794"
+                    },
                     "info": "Get user payment methods for refund"
                 }
             ],
@@ -336,6 +396,9 @@
                 "Agent identifies specific items to return vs keep.",
                 "Agent explains refund process and timing.",
                 "Agent asks for confirmation before processing return."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -363,25 +426,33 @@
                 {
                     "action_id": "8_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "aarav.anderson9752@example.com"},
+                    "arguments": {
+                        "email": "aarav.anderson9752@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
                     "action_id": "8_1",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W4316152"},
+                    "arguments": {
+                        "order_id": "#W4316152"
+                    },
                     "info": "Get order details"
                 },
                 {
                     "action_id": "8_2",
                     "name": "get_product_details",
-                    "arguments": {"product_id": "9832717871"},
+                    "arguments": {
+                        "product_id": "9832717871"
+                    },
                     "info": "Get tea kettle variants for exchange"
                 },
                 {
                     "action_id": "8_3",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "aarav_anderson_8794"},
+                    "arguments": {
+                        "user_id": "aarav_anderson_8794"
+                    },
                     "info": "Get user payment methods"
                 }
             ],
@@ -391,6 +462,9 @@
                 "Agent calculates price difference for upgrade.",
                 "Agent checks gift card balance is sufficient.",
                 "Agent asks for confirmation before processing exchange."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -418,13 +492,19 @@
                 {
                     "action_id": "9_0",
                     "name": "find_user_id_by_name_zip",
-                    "arguments": {"first_name": "Noah", "last_name": "Brown", "zip": "80279"},
+                    "arguments": {
+                        "first_name": "Noah",
+                        "last_name": "Brown",
+                        "zip": "80279"
+                    },
                     "info": "Find user by name and zip"
                 },
                 {
                     "action_id": "9_1",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "noah_brown_6181"},
+                    "arguments": {
+                        "user_id": "noah_brown_6181"
+                    },
                     "info": "Get user details including orders"
                 }
             ],
@@ -434,6 +514,9 @@
                 "Agent finds correct user account.",
                 "Agent lists all orders with their statuses.",
                 "Agent identifies which orders can be modified (pending ones)."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -461,7 +544,9 @@
                 {
                     "action_id": "10_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "anya.garcia2061@example.com"},
+                    "arguments": {
+                        "email": "anya.garcia2061@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
@@ -473,19 +558,25 @@
                 {
                     "action_id": "10_2",
                     "name": "get_product_details",
-                    "arguments": {"product_id": "4760268021"},
+                    "arguments": {
+                        "product_id": "4760268021"
+                    },
                     "info": "Get laptop details"
                 },
                 {
                     "action_id": "10_3",
                     "name": "get_product_details",
-                    "arguments": {"product_id": "6945232052"},
+                    "arguments": {
+                        "product_id": "6945232052"
+                    },
                     "info": "Get smart watch details"
                 },
                 {
                     "action_id": "10_4",
                     "name": "get_product_details",
-                    "arguments": {"product_id": "6938111410"},
+                    "arguments": {
+                        "product_id": "6938111410"
+                    },
                     "info": "Get running shoes details"
                 }
             ],
@@ -495,6 +586,9 @@
                 "Agent shows available variants within each category.",
                 "Agent mentions availability status for variants.",
                 "Agent provides price ranges to help comparison."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -522,37 +616,49 @@
                 {
                     "action_id": "11_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "ivan.santos3158@example.com"},
+                    "arguments": {
+                        "email": "ivan.santos3158@example.com"
+                    },
                     "info": "Find user by email"
                 },
                 {
                     "action_id": "11_1",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "ivan_santos_6635"},
+                    "arguments": {
+                        "user_id": "ivan_santos_6635"
+                    },
                     "info": "Get user details to see all orders"
                 },
                 {
                     "action_id": "11_2",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W6893533"},
+                    "arguments": {
+                        "order_id": "#W6893533"
+                    },
                     "info": "Get first order details"
                 },
                 {
                     "action_id": "11_3",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W8770097"},
+                    "arguments": {
+                        "order_id": "#W8770097"
+                    },
                     "info": "Get second order details"
                 },
                 {
                     "action_id": "11_4",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W5183325"},
+                    "arguments": {
+                        "order_id": "#W5183325"
+                    },
                     "info": "Get third order details"
                 },
                 {
                     "action_id": "11_5",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W3913498"},
+                    "arguments": {
+                        "order_id": "#W3913498"
+                    },
                     "info": "Get fourth order details"
                 }
             ],
@@ -570,6 +676,10 @@
                 "Agent does not confuse which items are in which order.",
                 "Agent mentions delivery dates for delivered orders.",
                 "Agent identifies which orders can still be modified (pending ones)."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -597,19 +707,25 @@
                 {
                     "action_id": "12_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "aarav.anderson9752@example.com"},
+                    "arguments": {
+                        "email": "aarav.anderson9752@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
                     "action_id": "12_1",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W9311069"},
+                    "arguments": {
+                        "order_id": "#W9311069"
+                    },
                     "info": "Get order details with item prices"
                 },
                 {
                     "action_id": "12_2",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "aarav_anderson_8794"},
+                    "arguments": {
+                        "user_id": "aarav_anderson_8794"
+                    },
                     "info": "Get user details for refund method"
                 }
             ],
@@ -625,6 +741,10 @@
                 "Agent explains refund process and timeline.",
                 "Agent confirms which items are being returned vs kept.",
                 "Agent does not hallucinate prices - must get from order details."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -652,19 +772,25 @@
                 {
                     "action_id": "13_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "anya.garcia2061@example.com"},
+                    "arguments": {
+                        "email": "anya.garcia2061@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
                     "action_id": "13_1",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "anya_garcia_3271"},
+                    "arguments": {
+                        "user_id": "anya_garcia_3271"
+                    },
                     "info": "Get user details to see gift card balance"
                 },
                 {
                     "action_id": "13_2",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W6436609"},
+                    "arguments": {
+                        "order_id": "#W6436609"
+                    },
                     "info": "Get order details to see total and current payment"
                 }
             ],
@@ -680,6 +806,10 @@
                 "Agent explains whether gift card balance covers order total.",
                 "Agent asks for confirmation before making payment changes.",
                 "Agent does not hallucinate gift card balance - must check user details."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -707,43 +837,57 @@
                 {
                     "action_id": "14_0",
                     "name": "find_user_id_by_email",
-                    "arguments": {"email": "aarav.anderson9752@example.com"},
+                    "arguments": {
+                        "email": "aarav.anderson9752@example.com"
+                    },
                     "info": "Find user"
                 },
                 {
                     "action_id": "14_1",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "aarav_anderson_8794"},
+                    "arguments": {
+                        "user_id": "aarav_anderson_8794"
+                    },
                     "info": "Get user details to see all orders"
                 },
                 {
                     "action_id": "14_2",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W4316152"},
+                    "arguments": {
+                        "order_id": "#W4316152"
+                    },
                     "info": "Get order 1 details"
                 },
                 {
                     "action_id": "14_3",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W9311069"},
+                    "arguments": {
+                        "order_id": "#W9311069"
+                    },
                     "info": "Get order 2 details"
                 },
                 {
                     "action_id": "14_4",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W9300146"},
+                    "arguments": {
+                        "order_id": "#W9300146"
+                    },
                     "info": "Get order 3 details"
                 },
                 {
                     "action_id": "14_5",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W3220203"},
+                    "arguments": {
+                        "order_id": "#W3220203"
+                    },
                     "info": "Get order 4 details"
                 },
                 {
                     "action_id": "14_6",
                     "name": "get_order_details",
-                    "arguments": {"order_id": "#W3470184"},
+                    "arguments": {
+                        "order_id": "#W3470184"
+                    },
                     "info": "Get order 5 details"
                 }
             ],
@@ -764,6 +908,10 @@
                 "Agent identifies which orders are delivered vs pending vs processed.",
                 "Agent flags any pending orders that would need cancellation.",
                 "Agent does not miss any orders - must check all 5."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null

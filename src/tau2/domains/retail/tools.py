@@ -1,7 +1,12 @@
 """Toolkit for the retail domain."""
 
+import functools
 import json
-from typing import List
+import os
+import random
+import uuid
+from datetime import datetime, timedelta
+from typing import Any, Dict, List
 
 from tau2.domains.retail.data_model import (
     GiftCard,
@@ -16,6 +21,285 @@ from tau2.domains.retail.data_model import (
 )
 from tau2.domains.retail.utils import RETAIL_DB_PATH
 from tau2.environment.toolkit import ToolKitBase, ToolType, is_tool
+
+# ============================================================================
+# VERBOSE RESPONSE CONFIGURATION
+# ============================================================================
+# Environment variable to enable/disable verbose responses
+# Set TAU2_VERBOSE_RESPONSES=1 to enable, TAU2_VERBOSE_RESPONSES=0 to disable
+VERBOSE_RESPONSES_ENABLED = os.environ.get("TAU2_VERBOSE_RESPONSES", "0") == "1"
+
+# Target: Stay well under 128k context window
+# With ~15 tool calls, need ~3k tokens per response = ~45k total
+VERBOSE_TARGET_TOKENS_PER_RESPONSE = 12000  # ~3k actual tokens per response
+VERBOSE_TARGET_CHARS = VERBOSE_TARGET_TOKENS_PER_RESPONSE * 4
+
+
+def _generate_retail_audit_log(entity_id: str, entity_type: str, num_entries: int = 300) -> List[Dict]:
+    """Generate realistic retail system audit log entries."""
+    actions = [
+        "ORDER_CREATED", "ORDER_UPDATED", "PAYMENT_PROCESSED", "PAYMENT_FAILED",
+        "INVENTORY_CHECKED", "INVENTORY_RESERVED", "INVENTORY_RELEASED", "SHIPPING_LABEL_CREATED",
+        "TRACKING_UPDATED", "DELIVERY_ATTEMPTED", "DELIVERY_CONFIRMED", "RETURN_INITIATED",
+        "RETURN_RECEIVED", "REFUND_PROCESSED", "EXCHANGE_REQUESTED", "CUSTOMER_CONTACTED",
+        "ADDRESS_VALIDATED", "FRAUD_CHECK_PASSED", "PRICE_ADJUSTED", "COUPON_APPLIED",
+        "GIFT_WRAP_ADDED", "SHIPPING_UPGRADED", "ITEM_BACKORDERED", "ITEM_CANCELLED"
+    ]
+    services = ["order-service", "payment-gateway", "inventory-mgmt", "shipping-service",
+                "warehouse-mgmt", "customer-service", "fraud-detection", "pricing-engine"]
+    entries = []
+    base_time = datetime(2025, 2, 25, 10, 0, 0)
+    for i in range(num_entries):
+        entry_time = base_time - timedelta(hours=i * 2, minutes=random.randint(0, 59))
+        entries.append({
+            "log_id": str(uuid.uuid4()),
+            "timestamp": entry_time.isoformat() + "Z",
+            "entity_id": entity_id,
+            "entity_type": entity_type,
+            "action": random.choice(actions),
+            "service": random.choice(services),
+            "warehouse_id": f"WH-{random.randint(100, 999)}",
+            "worker_id": f"WRK{random.randint(10000, 99999)}",
+            "processing_time_ms": random.randint(10, 200),
+            "cache_hit": random.choice([True, False]),
+            "shipping_zone": random.choice(["A", "B", "C", "D", "E"]),
+            "carrier": random.choice(["UPS", "FedEx", "USPS", "DHL", "OnTrac"]),
+        })
+    return entries
+
+
+def _generate_similar_orders(actual_order_id: str, actual_user: str) -> List[Dict]:
+    """Generate confounding similar order data."""
+    statuses = ["pending", "processing", "shipped", "delivered", "cancelled", "returned"]
+    
+    similar_orders = []
+    order_prefix = actual_order_id[:3] if actual_order_id else "#W0"
+    
+    for i in range(8):
+        order_num = random.randint(1000000, 9999999)
+        similar_orders.append({
+            "order_id": f"{order_prefix}{order_num}",
+            "user_id": f"{actual_user[:5]}_{random.randint(100, 999)}" if actual_user else f"user_{random.randint(100, 999)}",
+            "status": random.choice(statuses),
+            "total": round(random.uniform(20, 500), 2),
+            "items_count": random.randint(1, 8),
+            "order_date": f"2025-{random.randint(1, 2):02d}-{random.randint(1, 28):02d}",
+            "similarity_score": round(random.uniform(0.60, 0.88), 2),
+            "match_type": random.choice(["user_match", "address_similar", "item_overlap", "recent_order"]),
+            "_note": "Similar order found - verify correct order before proceeding"
+        })
+    return similar_orders
+
+
+def _generate_similar_products(actual_product_id: str, actual_name: str) -> List[Dict]:
+    """Generate confounding similar product data."""
+    categories = ["Electronics", "Clothing", "Home & Garden", "Sports", "Books", "Toys"]
+    
+    similar_products = []
+    for i in range(6):
+        similar_products.append({
+            "product_id": str(random.randint(1000000000, 9999999999)),
+            "name": f"{actual_name[:20] if actual_name else 'Product'}... (variant {i+1})",
+            "category": random.choice(categories),
+            "price_range": f"${random.randint(10, 100)}-${random.randint(100, 500)}",
+            "variants_count": random.randint(2, 12),
+            "in_stock": random.choice([True, True, True, False]),
+            "rating": round(random.uniform(3.5, 5.0), 1),
+            "reviews_count": random.randint(10, 5000),
+            "similarity_score": round(random.uniform(0.65, 0.92), 2),
+            "_note": "Similar product - verify correct item before processing"
+        })
+    return similar_products
+
+
+def _generate_similar_users(actual_user_id: str, actual_name: str) -> List[Dict]:
+    """Generate confounding similar user data."""
+    first_names = ["Sara", "Sarah", "John", "Jon", "Mike", "Michael", "Lisa", "Liza"]
+    last_names = ["Doe", "Smith", "Johnson", "Williams", "Brown", "Jones", "Davis"]
+    
+    similar_users = []
+    for i in range(6):
+        similar_users.append({
+            "user_id": f"{random.choice(first_names).lower()}_{random.choice(last_names).lower()}_{random.randint(100, 999)}",
+            "name": f"{random.choice(first_names)} {random.choice(last_names)}",
+            "email_domain": random.choice(["gmail.com", "yahoo.com", "outlook.com", "hotmail.com"]),
+            "zip_code": f"{random.randint(10000, 99999)}",
+            "account_status": random.choice(["active", "active", "active", "suspended"]),
+            "orders_count": random.randint(1, 50),
+            "similarity_score": round(random.uniform(0.55, 0.85), 2),
+            "match_type": random.choice(["name_partial", "email_similar", "address_match", "phone_similar"]),
+            "_note": "Similar user found - verify identity before proceeding"
+        })
+    return similar_users
+
+
+def _generate_inventory_history(product_id: str, num_entries: int = 40) -> List[Dict]:
+    """Generate inventory movement history."""
+    entries = []
+    base_qty = random.randint(50, 500)
+    
+    for i in range(num_entries):
+        qty_change = random.randint(-20, 30)
+        entries.append({
+            "record_id": str(uuid.uuid4()),
+            "product_id": product_id,
+            "timestamp": f"2025-02-{max(1, 25-i):02d}T{random.randint(0, 23):02d}:{random.randint(0, 59):02d}:00Z",
+            "warehouse_id": f"WH-{random.randint(100, 999)}",
+            "quantity_before": base_qty,
+            "quantity_after": base_qty + qty_change,
+            "movement_type": random.choice(["sale", "return", "restock", "transfer", "adjustment"]),
+            "reference_id": f"REF-{random.randint(100000, 999999)}",
+        })
+        base_qty += qty_change
+    return entries
+
+
+def _generate_verbose_padding_retail(entity_id: str, entity_type: str) -> Dict:
+    """Generate retail-specific verbose padding with confounding data."""
+    padding = {
+        "_audit_log": _generate_retail_audit_log(entity_id, entity_type, num_entries=200),
+        "_inventory_movements": _generate_inventory_history(entity_id, num_entries=25),
+        "_system_diagnostics": {
+            "inventory_sync_status": "synchronized",
+            "last_sync_time": "2025-02-25T12:05:00Z",
+            "cache_status": {"hit_rate": 0.91, "entries": 32045, "ttl_seconds": 180},
+            "warehouse_status": {
+                "WH-101": {"status": "operational", "capacity": "78%"},
+                "WH-205": {"status": "operational", "capacity": "65%"},
+                "WH-309": {"status": "maintenance", "capacity": "45%"}
+            }
+        },
+        "_fulfillment_options": {
+            "standard_shipping": {"available": True, "days": "5-7", "cost": 5.99},
+            "express_shipping": {"available": True, "days": "2-3", "cost": 15.99},
+            "next_day": {"available": random.choice([True, False]), "cost": 25.99},
+            "store_pickup": {"available": True, "locations": random.randint(2, 8)}
+        },
+        "_internal_metadata": {
+            "response_generated_at": datetime.now().isoformat() + "Z",
+            "processing_pipeline": [
+                {"stage": "request_validation", "duration_ms": 2, "status": "success"},
+                {"stage": "inventory_lookup", "duration_ms": 35, "status": "success"},
+                {"stage": "pricing_calculation", "duration_ms": 18, "status": "success"},
+                {"stage": "availability_check", "duration_ms": 42, "status": "success"},
+                {"stage": "response_formatting", "duration_ms": 5, "status": "success"},
+            ],
+            "api_version": "v3.2.0"
+        }
+    }
+    return padding
+
+
+def add_verbose_padding_retail(func):
+    """Decorator that adds verbose padding to retail tool responses."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        
+        if not VERBOSE_RESPONSES_ENABLED:
+            return result
+            
+        # Convert Pydantic models or other objects to dict if needed
+        if hasattr(result, 'model_dump'):
+            result = result.model_dump()
+        elif hasattr(result, '__dict__') and not isinstance(result, dict):
+            result = {"data": str(result)}
+        elif isinstance(result, list):
+            result = {"results": result}
+        elif not isinstance(result, dict):
+            result = {"value": result}
+        
+        # Extract entity info
+        entity_id = result.get('order_id') or result.get('user_id') or \
+                   result.get('product_id') or str(uuid.uuid4())[:8]
+        entity_type = result.get('_entity_type', 'order')
+        
+        # Add verbose padding
+        result.update(_generate_verbose_padding_retail(str(entity_id), entity_type))
+        
+        return result
+    
+    return wrapper
+
+
+def add_confounding_orders(func):
+    """Decorator that adds confounding similar orders to responses."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        
+        if not VERBOSE_RESPONSES_ENABLED:
+            return result
+            
+        if hasattr(result, 'model_dump'):
+            result = result.model_dump()
+        elif not isinstance(result, dict):
+            return result
+            
+        order_id = result.get('order_id', '#W0000000')
+        user_id = result.get('user_id', 'unknown_user')
+        
+        result['_similar_orders_found'] = _generate_similar_orders(order_id, user_id)
+        result['_search_notes'] = "Multiple similar orders found in system. Exact match returned based on order ID. Review _similar_orders_found for potential related orders."
+        
+        return result
+    
+    return wrapper
+
+
+def add_confounding_users(func):
+    """Decorator that adds confounding similar users to responses."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        
+        if not VERBOSE_RESPONSES_ENABLED:
+            return result
+            
+        if hasattr(result, 'model_dump'):
+            result = result.model_dump()
+        elif not isinstance(result, dict):
+            return result
+            
+        user_id = result.get('user_id', 'unknown')
+        name = result.get('name', {})
+        full_name = f"{name.get('first_name', 'Unknown')} {name.get('last_name', 'User')}" if isinstance(name, dict) else str(name)
+        
+        result['_similar_users_found'] = _generate_similar_users(user_id, full_name)
+        result['_search_notes'] = "Multiple similar user profiles found. Verify correct customer identity before making account changes."
+        
+        return result
+    
+    return wrapper
+
+
+def add_confounding_products(func):
+    """Decorator that adds confounding similar products to responses."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        
+        if not VERBOSE_RESPONSES_ENABLED:
+            return result
+            
+        if hasattr(result, 'model_dump'):
+            result = result.model_dump()
+        elif not isinstance(result, dict):
+            return result
+            
+        product_id = result.get('product_id', 'unknown')
+        name = result.get('name', 'Product')
+        
+        result['_similar_products_found'] = _generate_similar_products(product_id, name)
+        result['_related_items'] = [
+            {"type": "frequently_bought_together", "count": random.randint(3, 8)},
+            {"type": "customers_also_viewed", "count": random.randint(5, 15)},
+            {"type": "same_category", "count": random.randint(20, 100)}
+        ]
+        
+        return result
+    
+    return wrapper
 
 
 class RetailTools(ToolKitBase):  # Tools
@@ -312,7 +596,9 @@ class RetailTools(ToolKitBase):  # Tools
         raise ValueError("User not found")
 
     @is_tool(ToolType.READ)
-    def get_order_details(self, order_id: str) -> Order:
+    @add_verbose_padding_retail
+    @add_confounding_orders
+    def get_order_details(self, order_id: str):
         """Get the status and details of an order.
 
         Args:
@@ -325,10 +611,12 @@ class RetailTools(ToolKitBase):  # Tools
             ValueError: If the order is not found.
         """
         order = self._get_order(order_id)
-        return order
+        return order.model_dump() if hasattr(order, 'model_dump') else order
 
     @is_tool(ToolType.READ)
-    def get_product_details(self, product_id: str) -> Product:
+    @add_verbose_padding_retail
+    @add_confounding_products
+    def get_product_details(self, product_id: str):
         """Get the inventory details of a product.
 
         Args:
@@ -341,10 +629,12 @@ class RetailTools(ToolKitBase):  # Tools
             ValueError: If the product is not found.
         """
         product = self._get_product(product_id)
-        return product
+        return product.model_dump() if hasattr(product, 'model_dump') else product
 
     @is_tool(ToolType.READ)
-    def get_user_details(self, user_id: str) -> User:
+    @add_verbose_padding_retail
+    @add_confounding_users
+    def get_user_details(self, user_id: str):
         """Get the details of a user, including their orders.
 
         Args:
@@ -357,7 +647,7 @@ class RetailTools(ToolKitBase):  # Tools
             ValueError: If the user is not found.
         """
         user = self._get_user(user_id)
-        return user
+        return user.model_dump() if hasattr(user, 'model_dump') else user
 
     @is_tool(ToolType.READ)
     def list_all_product_types(self) -> str:

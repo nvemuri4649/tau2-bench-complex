@@ -22,25 +22,35 @@
                 {
                     "action_id": "1_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "mia_li_3668"},
+                    "arguments": {
+                        "user_id": "mia_li_3668"
+                    },
                     "info": "Must fetch user to verify membership and reservations"
                 },
                 {
                     "action_id": "1_1",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "AIXC49"},
+                    "arguments": {
+                        "reservation_id": "AIXC49"
+                    },
                     "info": "Must get details for the flight change request"
                 },
                 {
                     "action_id": "1_2",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "NO6JO3"},
+                    "arguments": {
+                        "reservation_id": "NO6JO3"
+                    },
                     "info": "Must get details for the delayed flight compensation"
                 },
                 {
                     "action_id": "1_3",
                     "name": "search_direct_flight",
-                    "arguments": {"origin": "LAX", "destination": "BOS", "date": "2024-05-22"},
+                    "arguments": {
+                        "origin": "LAX",
+                        "destination": "BOS",
+                        "date": "2024-05-22"
+                    },
                     "info": "Search for alternative flights on new date"
                 }
             ],
@@ -50,6 +60,9 @@
                 "Agent looks up both reservations to verify claims.",
                 "Agent searches for alternative flights for the change request.",
                 "Agent explains baggage allowance based on actual membership level."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -77,25 +90,37 @@
                 {
                     "action_id": "2_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "mia_li_3668"},
+                    "arguments": {
+                        "user_id": "mia_li_3668"
+                    },
                     "info": "Fetch user details"
                 },
                 {
                     "action_id": "2_1",
                     "name": "search_direct_flight",
-                    "arguments": {"origin": "DEN", "destination": "LAS", "date": "2024-05-25"},
+                    "arguments": {
+                        "origin": "DEN",
+                        "destination": "LAS",
+                        "date": "2024-05-25"
+                    },
                     "info": "Search outbound flights"
                 },
                 {
                     "action_id": "2_2",
                     "name": "search_direct_flight",
-                    "arguments": {"origin": "LAS", "destination": "DEN", "date": "2024-05-28"},
+                    "arguments": {
+                        "origin": "LAS",
+                        "destination": "DEN",
+                        "date": "2024-05-28"
+                    },
                     "info": "Search return flights"
                 },
                 {
                     "action_id": "2_3",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "HKEG34"},
+                    "arguments": {
+                        "reservation_id": "HKEG34"
+                    },
                     "info": "Get existing reservation for baggage update"
                 }
             ],
@@ -105,6 +130,9 @@
                 "Agent correctly handles multiple passenger information.",
                 "Agent provides pricing information before booking.",
                 "Agent addresses the baggage upgrade request for existing reservation."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -132,13 +160,17 @@
                 {
                     "action_id": "3_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "mei_hernandez_8984"},
+                    "arguments": {
+                        "user_id": "mei_hernandez_8984"
+                    },
                     "info": "Fetch user to verify claims"
                 },
                 {
                     "action_id": "3_1",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "1AKIA8"},
+                    "arguments": {
+                        "reservation_id": "1AKIA8"
+                    },
                     "info": "Verify cabin class and passenger count"
                 }
             ],
@@ -151,6 +183,10 @@
                 "Agent correctly identifies the reservation as economy class.",
                 "Agent correctly identifies there are fewer than 4 passengers.",
                 "Agent explains seat selection options based on actual cabin class (economy)."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -178,19 +214,28 @@
                 {
                     "action_id": "4_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "chen_hernandez_2608"},
+                    "arguments": {
+                        "user_id": "chen_hernandez_2608"
+                    },
                     "info": "Fetch user details"
                 },
                 {
                     "action_id": "4_1",
                     "name": "get_flight_status",
-                    "arguments": {"flight_number": "HAT001", "date": "2024-05-03"},
+                    "arguments": {
+                        "flight_number": "HAT001",
+                        "date": "2024-05-03"
+                    },
                     "info": "Verify the flight was actually cancelled"
                 },
                 {
                     "action_id": "4_2",
                     "name": "search_direct_flight",
-                    "arguments": {"origin": "PHL", "destination": "LGA", "date": "2024-05-16"},
+                    "arguments": {
+                        "origin": "PHL",
+                        "destination": "LGA",
+                        "date": "2024-05-16"
+                    },
                     "info": "Search for alternative flights"
                 }
             ],
@@ -200,6 +245,9 @@
                 "Agent searches for alternative flights to help rebook.",
                 "Agent explains compensation policy for cancelled flights.",
                 "Agent does not assume cancellation without checking status."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -227,13 +275,17 @@
                 {
                     "action_id": "5_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "james_taylor_7043"},
+                    "arguments": {
+                        "user_id": "james_taylor_7043"
+                    },
                     "info": "Fetch user details"
                 },
                 {
                     "action_id": "5_1",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "UUN48W"},
+                    "arguments": {
+                        "reservation_id": "UUN48W"
+                    },
                     "info": "Get reservation to see passengers and insurance status"
                 }
             ],
@@ -245,6 +297,10 @@
                 "Agent confirms the number of passengers (3).",
                 "Agent explains that insurance is already included or provides pricing if not.",
                 "Agent asks for specific passenger name correction details."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -272,13 +328,19 @@
                 {
                     "action_id": "6_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "aarav_nguyen_1055"},
+                    "arguments": {
+                        "user_id": "aarav_nguyen_1055"
+                    },
                     "info": "Fetch user to see payment methods including certificate"
                 },
                 {
                     "action_id": "6_1",
                     "name": "search_onestop_flight",
-                    "arguments": {"origin": "ATL", "destination": "DEN", "date": "2024-05-20"},
+                    "arguments": {
+                        "origin": "ATL",
+                        "destination": "DEN",
+                        "date": "2024-05-20"
+                    },
                     "info": "Search for one-stop flights"
                 }
             ],
@@ -288,6 +350,9 @@
                 "Agent identifies available payment methods including certificate.",
                 "Agent explains how certificate can be applied to booking.",
                 "Agent provides flight options with pricing."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -315,19 +380,27 @@
                 {
                     "action_id": "7_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "lucas_hernandez_8985"},
+                    "arguments": {
+                        "user_id": "lucas_hernandez_8985"
+                    },
                     "info": "Fetch user details"
                 },
                 {
                     "action_id": "7_1",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "4G94T6"},
+                    "arguments": {
+                        "reservation_id": "4G94T6"
+                    },
                     "info": "Get current reservation details"
                 },
                 {
                     "action_id": "7_2",
                     "name": "search_direct_flight",
-                    "arguments": {"origin": "MCO", "destination": "PHX", "date": "2024-05-23"},
+                    "arguments": {
+                        "origin": "MCO",
+                        "destination": "PHX",
+                        "date": "2024-05-23"
+                    },
                     "info": "Search for new flight on requested date"
                 }
             ],
@@ -337,6 +410,9 @@
                 "Agent explains cancellation policy and any fees.",
                 "Agent searches for alternative flights on requested new date.",
                 "Agent maintains same cabin class preference when showing options."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -364,13 +440,17 @@
                 {
                     "action_id": "8_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "sofia_anderson_8718"},
+                    "arguments": {
+                        "user_id": "sofia_anderson_8718"
+                    },
                     "info": "Fetch user to check membership level"
                 },
                 {
                     "action_id": "8_1",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "1OWO6T"},
+                    "arguments": {
+                        "reservation_id": "1OWO6T"
+                    },
                     "info": "Get reservation to verify cabin class and passenger count"
                 }
             ],
@@ -380,6 +460,9 @@
                 "Agent provides specific baggage allowance numbers, not vague answers.",
                 "Agent explains paid baggage options and prices.",
                 "Agent considers membership level in baggage calculation."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -407,25 +490,35 @@
                 {
                     "action_id": "9_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "isabella_muller_2311"},
+                    "arguments": {
+                        "user_id": "isabella_muller_2311"
+                    },
                     "info": "Fetch user details"
                 },
                 {
                     "action_id": "9_1",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "PGAGLM"},
+                    "arguments": {
+                        "reservation_id": "PGAGLM"
+                    },
                     "info": "Get reservation to see all flights"
                 },
                 {
                     "action_id": "9_2",
                     "name": "get_flight_status",
-                    "arguments": {"flight_number": "HAT090", "date": "2024-05-24"},
+                    "arguments": {
+                        "flight_number": "HAT090",
+                        "date": "2024-05-24"
+                    },
                     "info": "Check first leg status"
                 },
                 {
                     "action_id": "9_3",
                     "name": "get_flight_status",
-                    "arguments": {"flight_number": "HAT223", "date": "2024-05-24"},
+                    "arguments": {
+                        "flight_number": "HAT223",
+                        "date": "2024-05-24"
+                    },
                     "info": "Check second leg status"
                 }
             ],
@@ -435,6 +528,9 @@
                 "Agent reports actual status, not assumed status.",
                 "Agent explains compensation policy if delays are found.",
                 "Agent provides specific flight times and status details."
+            ],
+            "reward_basis": [
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -462,13 +558,19 @@
                 {
                     "action_id": "10_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "aarav_nguyen_1055"},
+                    "arguments": {
+                        "user_id": "aarav_nguyen_1055"
+                    },
                     "info": "Fetch user to see gift card balance and membership"
                 },
                 {
                     "action_id": "10_1",
                     "name": "search_direct_flight",
-                    "arguments": {"origin": "MIA", "destination": "LAX", "date": "2024-05-20"},
+                    "arguments": {
+                        "origin": "MIA",
+                        "destination": "LAX",
+                        "date": "2024-05-20"
+                    },
                     "info": "Search for available flights"
                 }
             ],
@@ -480,6 +582,10 @@
                 "Agent checks gift card balance before proceeding.",
                 "Agent explains what silver membership benefits include.",
                 "Agent provides flight options with pricing."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -507,13 +613,19 @@
                 {
                     "action_id": "11_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "mei_hernandez_8984"},
+                    "arguments": {
+                        "user_id": "mei_hernandez_8984"
+                    },
                     "info": "Get user to see certificates and membership"
                 },
                 {
                     "action_id": "11_1",
                     "name": "search_direct_flight",
-                    "arguments": {"origin": "DFW", "destination": "DEN", "date": "2024-05-22"},
+                    "arguments": {
+                        "origin": "DFW",
+                        "destination": "DEN",
+                        "date": "2024-05-22"
+                    },
                     "info": "Search for flights"
                 }
             ],
@@ -529,6 +641,10 @@
                 "Agent calculates total certificate value ($500).",
                 "Agent explains baggage allowance and fees for gold members.",
                 "Agent does not hallucinate certificate amounts - must get from user record."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -556,25 +672,36 @@
                 {
                     "action_id": "12_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "chen_hernandez_2608"},
+                    "arguments": {
+                        "user_id": "chen_hernandez_2608"
+                    },
                     "info": "Get user details"
                 },
                 {
                     "action_id": "12_1",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "V25KYO"},
+                    "arguments": {
+                        "reservation_id": "V25KYO"
+                    },
                     "info": "Get reservation to check insurance status"
                 },
                 {
                     "action_id": "12_2",
                     "name": "get_flight_status",
-                    "arguments": {"flight_number": "HAT001", "date": "2024-05-14"},
+                    "arguments": {
+                        "flight_number": "HAT001",
+                        "date": "2024-05-14"
+                    },
                     "info": "Verify flight was actually cancelled"
                 },
                 {
                     "action_id": "12_3",
                     "name": "search_direct_flight",
-                    "arguments": {"origin": "PHL", "destination": "LGA", "date": "2024-05-16"},
+                    "arguments": {
+                        "origin": "PHL",
+                        "destination": "LGA",
+                        "date": "2024-05-16"
+                    },
                     "info": "Search for alternative flights"
                 }
             ],
@@ -589,6 +716,10 @@
                 "Agent explains insurance claim process if coverage exists.",
                 "Agent searches for alternative rebooking options.",
                 "Agent does not assume insurance status - must check reservation."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -616,19 +747,25 @@
                 {
                     "action_id": "13_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "sophia_taylor_9065"},
+                    "arguments": {
+                        "user_id": "sophia_taylor_9065"
+                    },
                     "info": "Get user to see all reservations"
                 },
                 {
                     "action_id": "13_1",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "YKYUVI"},
+                    "arguments": {
+                        "reservation_id": "YKYUVI"
+                    },
                     "info": "Get first reservation details"
                 },
                 {
                     "action_id": "13_2",
                     "name": "get_reservation_details",
-                    "arguments": {"reservation_id": "Z8T7FA"},
+                    "arguments": {
+                        "reservation_id": "Z8T7FA"
+                    },
                     "info": "Get second reservation details if exists"
                 }
             ],
@@ -640,6 +777,10 @@
                 "Agent compares routes and dates to determine if bookings are truly duplicates.",
                 "Agent explains cancellation options and refund policies.",
                 "Agent does not cancel without verifying customer intent."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
@@ -667,13 +808,19 @@
                 {
                     "action_id": "14_0",
                     "name": "get_user_details",
-                    "arguments": {"user_id": "liam_santos_5621"},
+                    "arguments": {
+                        "user_id": "liam_santos_5621"
+                    },
                     "info": "Get user to see saved passengers"
                 },
                 {
                     "action_id": "14_1",
                     "name": "search_direct_flight",
-                    "arguments": {"origin": "ORD", "destination": "PHX", "date": "2024-05-25"},
+                    "arguments": {
+                        "origin": "ORD",
+                        "destination": "PHX",
+                        "date": "2024-05-25"
+                    },
                     "info": "Search for flights to Phoenix"
                 }
             ],
@@ -687,6 +834,10 @@
                 "Agent correctly identifies saved passenger as Liam Nguyen with DOB 1960-08-07.",
                 "Agent asks for confirmation before proceeding with booking.",
                 "Agent searches for requested flights after passenger verification."
+            ],
+            "reward_basis": [
+                "COMMUNICATE",
+                "NL_ASSERTION"
             ]
         },
         "annotations": null
