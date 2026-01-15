@@ -1,11 +1,34 @@
 import json
 import multiprocessing
 import random
+import sys
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional
 
 from loguru import logger
+
+
+def _truncate_verbose_traceback(exc_type, exc_value, exc_tb):
+    """Custom exception handler that truncates very long strings in tracebacks."""
+    # Get the formatted traceback
+    tb_lines = traceback.format_exception(exc_type, exc_value, exc_tb)
+    
+    # Truncate any line that's too long (likely verbose JSON)
+    MAX_LINE_LEN = 500
+    truncated_lines = []
+    for line in tb_lines:
+        if len(line) > MAX_LINE_LEN:
+            truncated_lines.append(line[:200] + "\n... [LINE TRUNCATED - verbose data removed] ...\n" + line[-100:])
+        else:
+            truncated_lines.append(line)
+    
+    sys.stderr.write("".join(truncated_lines))
+
+
+# Install custom exception handler to prevent terminal flooding
+sys.excepthook = _truncate_verbose_traceback
 
 from tau2.agent.llm_agent import LLMAgent, LLMGTAgent, LLMSoloAgent
 from tau2.data_model.simulation import (
@@ -162,7 +185,7 @@ def run_domain(config: RunConfig) -> Results:
         max_errors=config.max_errors,
         save_to=save_to,
         console_display=True,
-        evaluation_type=EvaluationType.ALL,
+        evaluation_type=EvaluationType.ALL_WITH_NL_ASSERTIONS,
         max_concurrency=config.max_concurrency,
         seed=config.seed,
         log_level=config.log_level,
@@ -188,7 +211,7 @@ def run_tasks(
     max_errors: int = 10,
     save_to: Optional[str | Path] = None,
     console_display: bool = True,
-    evaluation_type: EvaluationType = EvaluationType.ALL,
+    evaluation_type: EvaluationType = EvaluationType.ALL_WITH_NL_ASSERTIONS,
     max_concurrency: int = 1,
     seed: Optional[int] = 300,
     log_level: Optional[str] = "INFO",
@@ -374,7 +397,11 @@ def run_tasks(
                 ConsoleDisplay.display_simulation(simulation, show_details=False)
             _save(simulation)
         except Exception as e:
-            logger.error(f"Error running task {task.id}, trial {trial}: {e}")
+            # Truncate verbose data from error messages to avoid terminal flooding
+            error_str = str(e)
+            if len(error_str) > 2000:
+                error_str = error_str[:1000] + "\n... [TRUNCATED - full error too long] ...\n" + error_str[-500:]
+            logger.error(f"Error running task {task.id}, trial {trial}: {error_str}")
             raise e
         return simulation
 
@@ -412,7 +439,7 @@ def run_task(
     llm_args_user: Optional[dict] = None,
     max_steps: int = 100,
     max_errors: int = 10,
-    evaluation_type: EvaluationType = EvaluationType.ALL,
+    evaluation_type: EvaluationType = EvaluationType.ALL_WITH_NL_ASSERTIONS,
     seed: Optional[int] = None,
     enforce_communication_protocol: bool = False,
 ) -> SimulationRun:

@@ -1187,7 +1187,7 @@ class TelecomUserTools(ToolKitBase):
         network_status = self._check_network_status()
         return (
             network_status["connection_status"] == NetworkStatus.CONNECTED
-            and network_status["sim_status"] == SimStatus.READY
+            and network_status["sim_status"] == SimStatus.ACTIVE
             and not network_status["airplane_mode"]
         )
 

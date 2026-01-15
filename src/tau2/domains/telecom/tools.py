@@ -1,5 +1,6 @@
 """Toolkit for the telecom system."""
 
+import os
 import uuid
 from collections import defaultdict
 from datetime import date, timedelta
@@ -34,6 +35,534 @@ class IDGenerator:
         return f"{id_name}_{self.id_counter[id_type]}"
 
 
+# Configuration for verbose responses to generate long trajectories
+# Target: 150k-300k tokens per trajectory with ~10 tool calls
+# => 15k-30k tokens per tool response => 60k-120k chars per response
+# Environment variable to enable/disable verbose responses
+# Set TAU2_VERBOSE_RESPONSES=1 to enable, TAU2_VERBOSE_RESPONSES=0 to disable
+VERBOSE_RESPONSES_ENABLED = os.environ.get("TAU2_VERBOSE_RESPONSES", "0") == "1"
+# Target: Stay well under 128k context window (GPT-4.1 limit)
+# NL evaluator also sends full trajectory, so need headroom
+# With ~20 tool calls, need ~3k tokens per response = ~60k total
+# Leaves ~68k for conversation + system prompt + NL eval overhead
+# Actual output is ~25% of target, so 12k target = ~3k actual
+VERBOSE_TARGET_TOKENS_PER_RESPONSE = 12000  # ~3k actual tokens per response
+VERBOSE_TARGET_CHARS = VERBOSE_TARGET_TOKENS_PER_RESPONSE * 4  # ~48k chars target
+
+# Flag to suppress verbose output to terminal (reduces noise when debugging)
+VERBOSE_SUPPRESS_TERMINAL = os.environ.get("TAU2_VERBOSE_SUPPRESS_TERMINAL", "1") == "1"
+
+
+def add_verbose_padding_to_response(func):
+    """Decorator that adds verbose padding to dict responses for long trajectories."""
+    import functools
+    
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        
+        # Only add padding to dict responses when verbose mode is enabled
+        if VERBOSE_RESPONSES_ENABLED and isinstance(result, dict):
+            # Extract entity info for audit logs
+            entity_id = result.get('customer_id') or result.get('line_id') or \
+                       result.get('bill_id') or result.get('device_id') or \
+                       result.get('plan_id') or result.get('entity_id') or 'unknown'
+            entity_type = result.get('entity_type', 'entity').lower()
+            
+            # Add verbose padding
+            result.update(_generate_verbose_padding(str(entity_id), entity_type))
+        
+        return result
+    
+    return wrapper
+
+
+def _generate_audit_log(entity_id: str, entity_type: str, num_entries: int = 500) -> List[Dict]:
+    """Generate fake audit log entries for verbose responses."""
+    import random
+    actions = [
+        "VIEW", "UPDATE", "CREATE", "VALIDATE", "SYNC", "CACHE_HIT", "CACHE_MISS",
+        "AUTH_CHECK", "PERMISSION_GRANT", "RATE_LIMIT_CHECK", "ENCRYPTION_VERIFY",
+        "COMPLIANCE_CHECK", "DATA_MASK", "LOG_WRITE", "METRIC_EMIT", "TRACE_START",
+        "TRACE_END", "SPAN_CREATE", "CONTEXT_PROPAGATE", "RETRY_ATTEMPT"
+    ]
+    sources = [
+        "api-gateway-prod-us-east-1", "auth-service-v2.3.1", "billing-engine-core",
+        "customer-profile-service", "network-ops-controller", "compliance-monitor",
+        "fraud-detection-ml", "rate-limiter-redis", "cache-layer-memcached",
+        "message-queue-kafka", "event-processor-lambda", "data-pipeline-spark"
+    ]
+    entries = []
+    base_time = "2025-02-25T12:08:00.000Z"
+    for i in range(num_entries):
+        entries.append({
+            "log_id": f"LOG-{uuid.uuid4().hex[:12].upper()}",
+            "timestamp": f"2025-02-25T{10 + (i % 3):02d}:{(i * 7) % 60:02d}:{(i * 13) % 60:02d}.{random.randint(100,999)}Z",
+            "entity_id": entity_id,
+            "entity_type": entity_type,
+            "action": random.choice(actions),
+            "source_system": random.choice(sources),
+            "correlation_id": f"COR-{uuid.uuid4().hex[:16].upper()}",
+            "trace_id": f"TRC-{uuid.uuid4().hex[:32]}",
+            "span_id": f"SPN-{uuid.uuid4().hex[:16]}",
+            "user_agent": "TelecomAgentAPI/2.1.0 (internal-service)",
+            "ip_address": f"10.{random.randint(0,255)}.{random.randint(0,255)}.{random.randint(1,254)}",
+            "latency_ms": random.randint(1, 500),
+            "status_code": random.choice([200, 200, 200, 200, 201, 204, 304]),
+            "request_size_bytes": random.randint(100, 5000),
+            "response_size_bytes": random.randint(500, 50000),
+            "metadata": {
+                "region": random.choice(["us-east-1", "us-west-2", "eu-west-1"]),
+                "availability_zone": random.choice(["a", "b", "c"]),
+                "instance_id": f"i-{uuid.uuid4().hex[:17]}",
+                "container_id": f"ctr-{uuid.uuid4().hex[:12]}",
+                "kubernetes_pod": f"pod-telecom-api-{uuid.uuid4().hex[:8]}",
+                "deployment_version": f"v2.1.{random.randint(0,99)}-{uuid.uuid4().hex[:7]}"
+            }
+        })
+    return entries
+
+
+def _generate_compliance_records(entity_id: str, num_records: int = 100) -> List[Dict]:
+    """Generate fake compliance and regulatory records."""
+    import random
+    regulations = [
+        "GDPR-Article-17", "CCPA-Section-1798.100", "TCPA-47-USC-227", 
+        "FCC-Part-64", "PCI-DSS-3.2.1", "SOX-Section-404", "HIPAA-164.312",
+        "ISO-27001-A.12", "SOC2-CC6.1", "NIST-800-53-AC-2"
+    ]
+    records = []
+    for i in range(num_records):
+        records.append({
+            "compliance_record_id": f"COMP-{uuid.uuid4().hex[:10].upper()}",
+            "regulation": random.choice(regulations),
+            "entity_reference": entity_id,
+            "check_timestamp": f"2025-02-{random.randint(1,25):02d}T{random.randint(0,23):02d}:{random.randint(0,59):02d}:00Z",
+            "status": random.choice(["COMPLIANT", "COMPLIANT", "COMPLIANT", "PENDING_REVIEW"]),
+            "auditor_system": f"compliance-bot-v{random.randint(1,5)}.{random.randint(0,9)}",
+            "evidence_hash": f"sha256:{uuid.uuid4().hex}{uuid.uuid4().hex[:32]}",
+            "retention_policy": f"RETAIN_{random.choice([30, 90, 365, 730])}_DAYS",
+            "data_classification": random.choice(["PII", "SENSITIVE", "INTERNAL", "PUBLIC"]),
+            "encryption_status": "AES-256-GCM",
+            "access_log_reference": f"ACCESS-LOG-{uuid.uuid4().hex[:12]}",
+            "last_access_review": f"2025-02-{random.randint(1,20):02d}",
+            "next_review_due": f"2025-03-{random.randint(1,28):02d}",
+            "risk_score": round(random.uniform(0.0, 0.3), 4),
+            "control_effectiveness": round(random.uniform(0.85, 0.99), 4)
+        })
+    return records
+
+
+def _generate_similar_cases(entity_type: str, num_cases: int = 50) -> List[Dict]:
+    """Generate fake similar customer cases for context."""
+    import random
+    issue_types = [
+        "billing_inquiry", "service_disruption", "plan_change", "data_overage",
+        "roaming_issue", "device_troubleshoot", "payment_failure", "account_update"
+    ]
+    resolutions = [
+        "resolved_by_agent", "escalated_to_tier2", "customer_callback", 
+        "automated_fix", "credit_applied", "plan_adjusted", "device_replaced"
+    ]
+    cases = []
+    for i in range(num_cases):
+        cases.append({
+            "case_id": f"CASE-{random.randint(100000, 999999)}",
+            "similarity_score": round(random.uniform(0.65, 0.95), 4),
+            "issue_type": random.choice(issue_types),
+            "resolution": random.choice(resolutions),
+            "resolution_time_minutes": random.randint(5, 180),
+            "customer_satisfaction": random.randint(3, 5),
+            "agent_id": f"AGT-{random.randint(1000, 9999)}",
+            "created_date": f"2025-{random.randint(1,2):02d}-{random.randint(1,28):02d}",
+            "summary": f"Customer contacted regarding {random.choice(issue_types)} issue. "
+                      f"After troubleshooting, issue was {random.choice(['resolved', 'escalated', 'pending'])}. "
+                      f"Root cause identified as {random.choice(['system_error', 'user_configuration', 'network_issue', 'billing_discrepancy'])}.",
+            "tags": random.sample(["priority", "escalated", "vip", "retention_risk", "upsell_opportunity", "technical", "billing"], k=random.randint(1, 4)),
+            "sentiment_analysis": {
+                "overall": random.choice(["positive", "neutral", "negative"]),
+                "frustration_level": round(random.uniform(0, 1), 2),
+                "urgency_detected": random.choice([True, False])
+            }
+        })
+    return cases
+
+
+def _generate_system_diagnostics(num_entries: int = 200) -> Dict:
+    """Generate fake system diagnostic information."""
+    import random
+    return {
+        "system_health": {
+            "overall_status": "HEALTHY",
+            "last_health_check": "2025-02-25T12:07:55Z",
+            "uptime_percentage_30d": 99.97,
+            "active_incidents": 0,
+            "scheduled_maintenance": None
+        },
+        "performance_metrics": [
+            {
+                "metric_name": f"metric_{i}",
+                "value": round(random.uniform(0, 100), 4),
+                "unit": random.choice(["ms", "percent", "count", "bytes"]),
+                "timestamp": f"2025-02-25T12:{random.randint(0,8):02d}:{random.randint(0,59):02d}Z",
+                "aggregation": random.choice(["avg", "p50", "p95", "p99", "max"]),
+                "threshold_warning": random.randint(50, 80),
+                "threshold_critical": random.randint(80, 100)
+            }
+            for i in range(num_entries)
+        ],
+        "cache_statistics": {
+            "hit_rate": 0.94,
+            "miss_rate": 0.06,
+            "eviction_count_24h": random.randint(100, 1000),
+            "memory_used_mb": random.randint(500, 2000),
+            "memory_limit_mb": 4096,
+            "entries_count": random.randint(10000, 100000)
+        },
+        "database_connections": {
+            "active": random.randint(10, 50),
+            "idle": random.randint(5, 20),
+            "max_pool_size": 100,
+            "wait_queue_length": 0
+        },
+        "recent_errors": [
+            {
+                "error_id": f"ERR-{uuid.uuid4().hex[:8]}",
+                "timestamp": f"2025-02-25T{random.randint(0,11):02d}:{random.randint(0,59):02d}:00Z",
+                "error_type": random.choice(["TimeoutException", "ValidationError", "RateLimitExceeded"]),
+                "count": random.randint(1, 10),
+                "last_occurrence": f"2025-02-25T{random.randint(0,11):02d}:{random.randint(0,59):02d}:00Z",
+                "auto_resolved": random.choice([True, True, True, False])
+            }
+            for _ in range(20)
+        ]
+    }
+
+
+def _generate_network_topology(num_nodes: int = 100) -> Dict:
+    """Generate fake network topology information."""
+    import random
+    return {
+        "topology_version": "2025.02.25.001",
+        "last_updated": "2025-02-25T06:00:00Z",
+        "nodes": [
+            {
+                "node_id": f"NODE-{uuid.uuid4().hex[:8].upper()}",
+                "node_type": random.choice(["router", "switch", "gateway", "tower", "antenna"]),
+                "location": {
+                    "lat": round(random.uniform(25, 48), 6),
+                    "lon": round(random.uniform(-125, -70), 6),
+                    "region": random.choice(["northeast", "southeast", "midwest", "southwest", "west"]),
+                    "city": random.choice(["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Denver", "Seattle"])
+                },
+                "status": random.choice(["active", "active", "active", "maintenance"]),
+                "capacity_utilization": round(random.uniform(0.3, 0.85), 4),
+                "connected_devices": random.randint(100, 10000),
+                "bandwidth_gbps": random.choice([1, 10, 40, 100]),
+                "latency_ms": round(random.uniform(1, 50), 2),
+                "firmware_version": f"v{random.randint(1,5)}.{random.randint(0,9)}.{random.randint(0,99)}"
+            }
+            for _ in range(num_nodes)
+        ],
+        "connections": [
+            {
+                "connection_id": f"CONN-{uuid.uuid4().hex[:6]}",
+                "source_node": f"NODE-{uuid.uuid4().hex[:8].upper()}",
+                "target_node": f"NODE-{uuid.uuid4().hex[:8].upper()}",
+                "link_type": random.choice(["fiber", "microwave", "satellite"]),
+                "capacity_gbps": random.choice([1, 10, 40, 100]),
+                "current_load_percent": round(random.uniform(10, 80), 2)
+            }
+            for _ in range(num_nodes * 2)
+        ]
+    }
+
+
+# ==============================================================================
+# CONFOUNDING DATA GENERATORS
+# These create semantically similar but INCORRECT data to test agent accuracy
+# ==============================================================================
+
+def _generate_confounding_customers(actual_customer_id: str, actual_name: str, actual_phone: str) -> Dict:
+    """Generate similar customers that could confuse the agent."""
+    import random
+    
+    # Generate variations of the name
+    first_name = actual_name.split()[0] if ' ' in actual_name else actual_name
+    last_name = actual_name.split()[-1] if ' ' in actual_name else "Smith"
+    
+    similar_names = [
+        f"{first_name} {last_name[:-1]}i",  # Lee -> Li
+        f"{first_name[:-1]}a {last_name}",  # Michael -> Michala  
+        f"{first_name} {last_name} Jr.",
+        f"{first_name[0]}. {last_name}",
+        f"{first_name} {last_name}-Williams",
+    ]
+    
+    # Generate similar phone numbers (off by 1 digit)
+    phone_digits = actual_phone.replace("-", "")
+    similar_phones = []
+    for i in range(min(3, len(phone_digits))):
+        new_phone = list(phone_digits)
+        new_phone[-(i+1)] = str((int(new_phone[-(i+1)]) + 1) % 10)
+        similar_phones.append("-".join(["".join(new_phone[:3]), "".join(new_phone[3:6]), "".join(new_phone[6:])]))
+    
+    return {
+        "_similar_customers_in_database": [
+            {
+                "customer_id": f"C{random.randint(2000, 9999)}",
+                "full_name": name,
+                "phone_number": similar_phones[i % len(similar_phones)] if similar_phones else actual_phone,
+                "account_status": random.choice(["Active", "Suspended", "Pending"]),
+                "similarity_score": round(random.uniform(0.75, 0.95), 3),
+                "match_reason": random.choice(["name_fuzzy_match", "phone_partial_match", "address_proximity"])
+            }
+            for i, name in enumerate(similar_names)
+        ],
+        "_historical_customer_records": [
+            {
+                "record_id": f"HIST-{uuid.uuid4().hex[:8]}",
+                "customer_id": actual_customer_id,
+                "previous_name": f"{first_name} {last_name} (maiden: {random.choice(['Jones', 'Davis', 'Wilson'])})",
+                "previous_phone": similar_phones[0] if similar_phones else actual_phone,
+                "change_date": f"2024-{random.randint(1,12):02d}-{random.randint(1,28):02d}",
+                "change_type": random.choice(["name_change", "phone_update", "address_update"])
+            }
+            for _ in range(3)
+        ],
+        "_customer_merge_candidates": [
+            {
+                "candidate_id": f"C{random.randint(1000, 9999)}",
+                "merge_score": round(random.uniform(0.60, 0.85), 3),
+                "potential_duplicate": True,
+                "recommendation": "REVIEW_REQUIRED"
+            }
+            for _ in range(2)
+        ]
+    }
+
+
+def _generate_confounding_bills(actual_bill_id: str, actual_amount: float, actual_status: str) -> Dict:
+    """Generate similar bills with nearby amounts to confuse the agent."""
+    import random
+    
+    # Generate amounts close to the actual amount
+    nearby_amounts = [
+        round(actual_amount + 0.50, 2),
+        round(actual_amount - 0.01, 2),
+        round(actual_amount + 5.00, 2),
+        round(actual_amount - 5.00, 2),
+        round(actual_amount * 1.1, 2),  # 10% more
+    ]
+    
+    statuses = ["Paid", "Overdue", "Issued", "Draft", "Disputed"]
+    other_statuses = [s for s in statuses if s != actual_status]
+    
+    return {
+        "_bills_from_similar_accounts": [
+            {
+                "bill_id": f"B{random.randint(2000, 9999)}",
+                "customer_id": f"C{random.randint(1000, 9999)}",
+                "total_due": amount,
+                "status": random.choice(other_statuses),
+                "due_date": f"2025-02-{random.randint(15, 28):02d}",
+                "note": "Different customer - shown for comparison"
+            }
+            for amount in nearby_amounts[:3]
+        ],
+        "_historical_bills_same_customer": [
+            {
+                "bill_id": f"B{random.randint(100, 999)}",
+                "period": f"2024-{random.randint(1,12):02d}",
+                "total_due": round(actual_amount + random.uniform(-10, 10), 2),
+                "status": "Paid",
+                "paid_date": f"2024-{random.randint(1,12):02d}-{random.randint(1,28):02d}"
+            }
+            for _ in range(5)
+        ],
+        "_billing_projections": {
+            "estimated_next_bill": round(actual_amount * random.uniform(0.95, 1.15), 2),
+            "average_monthly": round(actual_amount * random.uniform(0.9, 1.1), 2),
+            "projected_annual": round(actual_amount * 12 * random.uniform(0.95, 1.05), 2),
+            "trend": random.choice(["increasing", "stable", "decreasing"])
+        },
+        "_similar_bill_amounts_in_system": [
+            {
+                "bill_id": f"B{random.randint(3000, 9999)}",
+                "amount": amount,
+                "customer_id": f"C{random.randint(1000, 9999)}",
+                "note": "DIFFERENT CUSTOMER - amount similarity only"
+            }
+            for amount in nearby_amounts
+        ]
+    }
+
+
+def _generate_confounding_lines(actual_line_id: str, actual_phone: str, actual_status: str) -> Dict:
+    """Generate similar lines and status history to confuse the agent."""
+    import random
+    
+    # Generate similar line IDs
+    line_num = int(actual_line_id[1:]) if actual_line_id[1:].isdigit() else 1000
+    similar_line_ids = [f"L{line_num + i}" for i in [-2, -1, 1, 2]]
+    
+    # Generate similar phone numbers
+    phone_base = actual_phone.replace("-", "")
+    similar_phones = [
+        f"{phone_base[:3]}-{phone_base[3:6]}-{int(phone_base[6:]) + i:04d}"[-12:]
+        for i in [-1, 1, 10, -10]
+    ]
+    
+    statuses = ["Active", "Suspended", "Pending Activation", "Closed"]
+    other_statuses = [s for s in statuses if s != actual_status]
+    
+    return {
+        "_other_lines_on_account": [
+            {
+                "line_id": lid,
+                "phone_number": similar_phones[i % len(similar_phones)],
+                "status": random.choice(other_statuses),
+                "plan": random.choice(["Basic", "Standard", "Premium", "Unlimited"]),
+                "note": "Different line on same account"
+            }
+            for i, lid in enumerate(similar_line_ids[:3])
+        ],
+        "_line_status_history": [
+            {
+                "date": f"2025-{random.randint(1,2):02d}-{random.randint(1,28):02d}",
+                "previous_status": random.choice(statuses),
+                "new_status": random.choice(statuses),
+                "reason": random.choice(["Payment received", "Non-payment", "Customer request", "Fraud alert", "Contract renewal"]),
+                "agent_id": f"AGT-{random.randint(100, 999)}"
+            }
+            for _ in range(8)
+        ],
+        "_lines_with_similar_numbers": [
+            {
+                "line_id": f"L{random.randint(2000, 9999)}",
+                "phone_number": phone,
+                "customer_id": f"C{random.randint(1000, 9999)}",
+                "status": random.choice(statuses),
+                "note": "DIFFERENT CUSTOMER - phone number similarity only"
+            }
+            for phone in similar_phones
+        ],
+        "_line_recommendations": {
+            "upgrade_eligible": random.choice([True, False]),
+            "recommended_plan": random.choice(["Premium Plus", "Unlimited Max", "Family Share"]),
+            "estimated_savings": round(random.uniform(5, 25), 2),
+            "confidence": round(random.uniform(0.7, 0.95), 3)
+        }
+    }
+
+
+def _generate_confounding_usage(actual_line_id: str, actual_used_gb: float, actual_limit_gb: float) -> Dict:
+    """Generate confounding usage data for multiple lines."""
+    import random
+    
+    line_num = int(actual_line_id[1:]) if actual_line_id[1:].isdigit() else 1000
+    
+    return {
+        "_usage_all_lines_on_account": [
+            {
+                "line_id": f"L{line_num + i}",
+                "data_used_gb": round(random.uniform(0.5, actual_limit_gb * 1.2), 2),
+                "data_limit_gb": actual_limit_gb + random.choice([-5, 0, 5, 10]),
+                "percentage_used": round(random.uniform(10, 110), 1),
+                "status": "Over limit" if random.random() > 0.7 else "Normal"
+            }
+            for i in range(-3, 4) if i != 0
+        ],
+        "_historical_usage_patterns": [
+            {
+                "month": f"2024-{month:02d}",
+                "data_used_gb": round(actual_used_gb * random.uniform(0.5, 1.5), 2),
+                "overage_gb": round(max(0, random.uniform(-2, 5)), 2),
+                "overage_charge": round(random.uniform(0, 15), 2)
+            }
+            for month in range(7, 13)
+        ],
+        "_usage_alerts_all_lines": [
+            {
+                "line_id": f"L{line_num + random.randint(-3, 3)}",
+                "alert_type": random.choice(["OVER_LIMIT", "APPROACHING_LIMIT", "UNUSUAL_USAGE", "ROAMING_HIGH"]),
+                "priority": random.choice(["HIGH", "MEDIUM", "LOW"]),
+                "message": random.choice([
+                    "Data limit exceeded",
+                    "90% of data used",
+                    "Unusual usage pattern detected",
+                    "High roaming charges detected"
+                ]),
+                "timestamp": f"2025-02-{random.randint(20, 25):02d}T{random.randint(0, 23):02d}:{random.randint(0, 59):02d}:00Z"
+            }
+            for _ in range(6)
+        ],
+        "_data_recommendations": {
+            "current_line_id": actual_line_id,
+            "suggested_refuel_gb": random.choice([1, 2, 5]),
+            "suggested_plan_upgrade": random.choice(["Unlimited Plus", "Premium Max", None]),
+            "potential_savings_monthly": round(random.uniform(0, 20), 2)
+        }
+    }
+
+
+def _generate_verbose_padding(entity_id: str, entity_type: str, target_chars: int = VERBOSE_TARGET_CHARS) -> Dict:
+    """Generate verbose padding data to reach target character count."""
+    if not VERBOSE_RESPONSES_ENABLED:
+        return {}
+    
+    import json
+    
+    # Calculate how many entries we need based on target
+    # Each audit entry is ~500 chars, so entries_needed = target_chars / 500
+    entries_per_section = max(10, target_chars // 2500)  # Distribute across 5 main sections
+    
+    padding = {
+        "_audit_log": _generate_audit_log(entity_id, entity_type, num_entries=entries_per_section),
+        "_compliance_records": _generate_compliance_records(entity_id, num_records=entries_per_section // 3),
+        "_similar_cases": _generate_similar_cases(entity_type, num_cases=entries_per_section // 5),
+        "_system_diagnostics": _generate_system_diagnostics(num_entries=entries_per_section // 2),
+        "_network_topology": _generate_network_topology(num_nodes=entries_per_section // 3),
+        "_internal_metadata": {
+            "response_generated_at": "2025-02-25T12:08:00.123456Z",
+            "processing_pipeline": [
+                {"stage": "request_validation", "duration_ms": 2, "status": "success"},
+                {"stage": "authentication", "duration_ms": 5, "status": "success"},
+                {"stage": "authorization", "duration_ms": 3, "status": "success"},
+                {"stage": "rate_limiting", "duration_ms": 1, "status": "success"},
+                {"stage": "cache_lookup", "duration_ms": 4, "status": "miss"},
+                {"stage": "database_query", "duration_ms": 45, "status": "success"},
+                {"stage": "data_transformation", "duration_ms": 8, "status": "success"},
+                {"stage": "response_serialization", "duration_ms": 3, "status": "success"},
+            ],
+            "feature_flags": {
+                "enhanced_logging": True,
+                "ml_recommendations": True,
+                "real_time_fraud_check": True,
+                "predictive_analytics": True,
+                "a_b_test_variant": "control"
+            },
+            "service_mesh_info": {
+                "upstream_services_called": ["auth-service", "billing-service", "profile-service"],
+                "circuit_breaker_status": "closed",
+                "retry_count": 0,
+                "timeout_budget_remaining_ms": 4950
+            }
+        }
+    }
+    
+    # Fine-tune to reach target
+    current_size = len(json.dumps(padding))
+    if current_size < target_chars:
+        additional_entries_needed = (target_chars - current_size) // 500
+        if additional_entries_needed > 0:
+            padding["_extended_audit_log"] = _generate_audit_log(
+                entity_id, entity_type, num_entries=additional_entries_needed
+            )
+    
+    return padding
+
+
 class TelecomTools(ToolKitBase):
     """Tools for the telecom domain implementing the functions described in the PRD."""
 
@@ -44,8 +573,29 @@ class TelecomTools(ToolKitBase):
         super().__init__(db)
         self.id_generator = IDGenerator()
 
-    # Customer Lookup
-    @is_tool(ToolType.READ)
+    # Customer Lookup (internal - not exposed to agent)
+    def _get_customer_by_phone_internal(self, phone_number: str) -> Customer:
+        """
+        Internal method to find a customer by phone number.
+        Returns the Customer object directly for internal use.
+        
+        Args:
+            phone_number: The phone number to search for.
+            
+        Returns:
+            Customer object.
+        """
+        for customer in self.db.customers:
+            if customer.phone_number == phone_number:
+                return customer
+            # Check lines
+            for line_id in customer.line_ids:
+                line = self._get_line_by_id(line_id)
+                if line and line.phone_number == phone_number:
+                    return customer
+        raise ValueError(f"Customer with phone number {phone_number} not found")
+
+    @add_verbose_padding_to_response
     def get_customer_by_phone(self, phone_number: str) -> Dict[str, Any]:
         """
         Finds a customer by their primary contact or line phone number.
@@ -128,7 +678,8 @@ class TelecomTools(ToolKitBase):
             except ValueError:
                 bills_summary.append({"bill_id": bill_id, "error": "Could not retrieve details"})
         
-        return {
+        # Build the main response
+        response = {
             "customer_id": found_customer.customer_id,
             "full_name": found_customer.full_name,
             "date_of_birth": found_customer.date_of_birth,
@@ -173,6 +724,16 @@ class TelecomTools(ToolKitBase):
                 "account_age_days": (get_today() - found_customer.created_at.date()).days if found_customer.created_at else None,
             },
         }
+        
+        # Add CONFOUNDING DATA - similar customers that could mislead the agent
+        if VERBOSE_RESPONSES_ENABLED:
+            response.update(_generate_confounding_customers(
+                actual_customer_id=found_customer.customer_id,
+                actual_name=found_customer.full_name,
+                actual_phone=found_customer.phone_number
+            ))
+        
+        return response
 
     @is_tool(ToolType.READ)
     def get_customer_by_id(self, customer_id: str) -> Customer:
@@ -336,6 +897,7 @@ class TelecomTools(ToolKitBase):
         return [plan.plan_id for plan in self.db.plans]
 
     @is_tool(ToolType.READ)
+    @add_verbose_padding_to_response
     def get_available_plans(self) -> Dict[str, Any]:
         """
         Retrieves all available mobile plans with comprehensive details including
@@ -483,6 +1045,7 @@ class TelecomTools(ToolKitBase):
         }
 
     @is_tool(ToolType.READ)
+    @add_verbose_padding_to_response
     def get_details_by_id(self, id: str) -> Dict[str, Any]:
         """
         Retrieves comprehensive details for a given ID including related entities,
@@ -509,7 +1072,7 @@ class TelecomTools(ToolKitBase):
             data_remaining = max(0, data_limit - data_used + line.data_refueling_gb)
             data_utilization_pct = (data_used / data_limit * 100) if data_limit > 0 else 0
             
-            return {
+            response = {
                 "entity_type": "Line",
                 "line_id": line.line_id,
                 "phone_number": line.phone_number,
@@ -543,6 +1106,16 @@ class TelecomTools(ToolKitBase):
                     "cache_ttl_seconds": 300,
                 },
             }
+            
+            # Add CONFOUNDING DATA - similar lines that could mislead the agent
+            if VERBOSE_RESPONSES_ENABLED:
+                response.update(_generate_confounding_lines(
+                    actual_line_id=line.line_id,
+                    actual_phone=line.phone_number,
+                    actual_status=line.status.value
+                ))
+            
+            return response
         elif id.startswith("D"):
             device = self._get_device_by_id(id)
             
@@ -836,6 +1409,7 @@ class TelecomTools(ToolKitBase):
 
     # Billing and Payments
     @is_tool(ToolType.READ)
+    @add_verbose_padding_to_response
     def get_bills_for_customer(self, customer_id: str, limit: int = 12) -> Dict[str, Any]:
         """
         Retrieves comprehensive billing history for a customer including
@@ -922,7 +1496,8 @@ class TelecomTools(ToolKitBase):
             account_health = "GOOD_STANDING"
             health_color = "GREEN"
         
-        return {
+        # Build the main response
+        response = {
             "customer_id": customer_id,
             "customer_name": customer.full_name,
             "bills": bills_detail,
@@ -955,6 +1530,19 @@ class TelecomTools(ToolKitBase):
                 "billing_cycle": "monthly",
             },
         }
+        
+        # Add CONFOUNDING DATA - similar bills that could mislead the agent
+        if VERBOSE_RESPONSES_ENABLED and bills_detail:
+            # Use the first outstanding bill's details for confounding
+            primary_bill = limited_bills[0] if limited_bills else None
+            if primary_bill:
+                response.update(_generate_confounding_bills(
+                    actual_bill_id=primary_bill.bill_id,
+                    actual_amount=primary_bill.total_due,
+                    actual_status=primary_bill.status.value
+                ))
+        
+        return response
 
     @is_tool(ToolType.WRITE)
     def send_payment_request(self, customer_id: str, bill_id: str) -> str:
@@ -1009,6 +1597,31 @@ class TelecomTools(ToolKitBase):
         bill = self._get_bill_by_id(bill_id)
         bill.status = BillStatus.PAID
         return f"Bill {bill_id} set to paid"
+
+    def set_bill_status(self, bill_id: str, status: str) -> str:
+        """
+        Sets the bill status. Used for test initialization.
+        
+        Args:
+            bill_id: The bill ID to update.
+            status: The new status ('Paid', 'Overdue', 'Issued', 'Draft', 'Disputed', 'Awaiting Payment').
+        
+        Returns:
+            Confirmation message.
+        """
+        bill = self._get_bill_by_id(bill_id)
+        status_map = {
+            'Paid': BillStatus.PAID,
+            'Overdue': BillStatus.OVERDUE,
+            'Issued': BillStatus.ISSUED,
+            'Draft': BillStatus.DRAFT,
+            'Disputed': BillStatus.DISPUTED,
+            'Awaiting Payment': BillStatus.AWAITING_PAYMENT,
+        }
+        if status not in status_map:
+            raise ValueError(f"Invalid status: {status}. Valid: {list(status_map.keys())}")
+        bill.status = status_map[status]
+        return f"Bill {bill_id} status set to {status}"
 
     def _apply_one_time_charge(
         self, customer_id: str, amount: float, description: str
@@ -1081,6 +1694,7 @@ class TelecomTools(ToolKitBase):
 
     # Usage and Contract Info
     @is_tool(ToolType.READ)
+    @add_verbose_padding_to_response
     def get_data_usage(self, customer_id: str, line_id: str) -> Dict[str, Any]:
         """
         Retrieves comprehensive data usage information for a line including
@@ -1137,7 +1751,8 @@ class TelecomTools(ToolKitBase):
             usage_status = "NORMAL"
             status_color = "GREEN"
 
-        return {
+        # Build the main response
+        response = {
             "line_id": line_id,
             "phone_number": target_line.phone_number,
             "plan_name": plan.name,
@@ -1187,6 +1802,16 @@ class TelecomTools(ToolKitBase):
                 "system_version": "tau2-telecom-v2.1.0",
             },
         }
+        
+        # Add CONFOUNDING DATA - usage for other lines that could mislead the agent
+        if VERBOSE_RESPONSES_ENABLED:
+            response.update(_generate_confounding_usage(
+                actual_line_id=line_id,
+                actual_used_gb=data_used,
+                actual_limit_gb=data_limit
+            ))
+        
+        return response
 
     def set_data_usage(
         self, customer_id: str, line_id: str, data_used_gb: float

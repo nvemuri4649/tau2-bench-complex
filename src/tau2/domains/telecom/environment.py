@@ -85,7 +85,7 @@ class TelecomEnvironment(Environment):
         if (
             current_payment_request is None
         ):  # If there already is a payment request, do nothing
-            customer = self.tools.get_customer_by_phone(phone_number)
+            customer = self.tools._get_customer_by_phone_internal(phone_number)
             bills = self.tools._get_bills_awaiting_payment(customer)
             if len(bills) != 0:
                 bill = bills[0]

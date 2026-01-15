@@ -18,18 +18,16 @@
     },
     "ticket": null,
     "initial_state": {
-      "initialization_data": {
-        "agent_data": {
-          "bills": [
-            {
-              "bill_id": "B1006",
-              "status": "Overdue"
-            }
-          ]
-        },
-        "user_data": null
-      },
+      "initialization_data": null,
       "initialization_actions": [
+        {
+          "env_type": "assistant",
+          "func_name": "set_bill_status",
+          "arguments": {
+            "bill_id": "B1006",
+            "status": "Overdue"
+          }
+        },
         {
           "env_type": "user",
           "func_name": "set_user_info",
@@ -56,26 +54,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2009"
-          },
-          "info": "Agent must look up customer to get customer_id and discover suspension",
-          "compare_args": ["phone_number"]
-        },
-        {
-          "action_id": "get_bills_0",
-          "requestor": "assistant",
-          "name": "get_bills_for_customer",
-          "arguments": {
-            "customer_id": "C1003"
-          },
-          "info": "Agent must check bills to find overdue bill",
-          "compare_args": ["customer_id"]
-        },
-        {
           "action_id": "get_line_details_0",
           "requestor": "assistant",
           "name": "get_details_by_id",
@@ -83,7 +61,9 @@
             "id": "L1009"
           },
           "info": "Agent should verify line status details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "send_payment_0",
@@ -94,7 +74,10 @@
             "bill_id": "B1006"
           },
           "info": "Agent must send payment request for the overdue bill",
-          "compare_args": ["customer_id", "bill_id"]
+          "compare_args": [
+            "customer_id",
+            "bill_id"
+          ]
         },
         {
           "action_id": "user_check_payment_0",
@@ -121,17 +104,10 @@
             "bill_id": "B1006"
           },
           "info": "Agent processes the payment",
-          "compare_args": ["customer_id", "bill_id"]
-        },
-        {
-          "action_id": "verify_payment_0",
-          "requestor": "assistant",
-          "name": "get_bills_for_customer",
-          "arguments": {
-            "customer_id": "C1003"
-          },
-          "info": "Agent verifies bill is now Paid before proceeding",
-          "compare_args": ["customer_id"]
+          "compare_args": [
+            "customer_id",
+            "bill_id"
+          ]
         },
         {
           "action_id": "resume_line_0",
@@ -142,7 +118,10 @@
             "line_id": "L1009"
           },
           "info": "Agent resumes the suspended line after bill is paid",
-          "compare_args": ["customer_id", "line_id"]
+          "compare_args": [
+            "customer_id",
+            "line_id"
+          ]
         },
         {
           "action_id": "user_reboot_0",
@@ -216,7 +195,6 @@
         "Agent should confirm with the database that the line status is now Active before telling user the issue is resolved."
       ],
       "reward_basis": [
-        "DB",
         "ENV_ASSERTION",
         "COMMUNICATE",
         "ACTION",
@@ -243,18 +221,7 @@
     },
     "ticket": null,
     "initial_state": {
-      "initialization_data": {
-        "agent_data": {
-          "lines": [
-            {
-              "line_id": "L1006",
-              "data_used_gb": 999.5,
-              "data_refueling_gb": 0.0
-            }
-          ]
-        },
-        "user_data": null
-      },
+      "initialization_data": null,
       "initialization_actions": [
         {
           "env_type": "user",
@@ -286,26 +253,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2006"
-          },
-          "info": "Agent must look up customer by the specific phone number provided",
-          "compare_args": ["phone_number"]
-        },
-        {
-          "action_id": "get_customer_details_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_id",
-          "arguments": {
-            "customer_id": "C1002"
-          },
-          "info": "Agent may look up full customer details to see all lines",
-          "compare_args": ["customer_id"]
-        },
-        {
           "action_id": "get_data_usage_0",
           "requestor": "assistant",
           "name": "get_data_usage",
@@ -314,7 +261,10 @@
             "line_id": "L1006"
           },
           "info": "Agent MUST check data usage for the SPECIFIC line L1006, not other lines on the account",
-          "compare_args": ["customer_id", "line_id"]
+          "compare_args": [
+            "customer_id",
+            "line_id"
+          ]
         },
         {
           "action_id": "get_line_details_0",
@@ -324,7 +274,9 @@
             "id": "L1006"
           },
           "info": "Agent should verify line details including roaming status",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "refuel_data_0",
@@ -336,7 +288,10 @@
             "gb_to_add": 2.0
           },
           "info": "Agent refuels maximum 2GB for the correct line L1006",
-          "compare_args": ["customer_id", "line_id"]
+          "compare_args": [
+            "customer_id",
+            "line_id"
+          ]
         },
         {
           "action_id": "user_speed_test_0",
@@ -398,7 +353,6 @@
         "Agent should acknowledge user is abroad (Germany) and verify roaming is enabled on the line."
       ],
       "reward_basis": [
-        "DB",
         "ENV_ASSERTION",
         "COMMUNICATE",
         "ACTION",
@@ -439,58 +393,7 @@
       "message_history": null
     },
     "evaluation_criteria": {
-      "actions": [
-        {
-          "action_id": "lookup_by_phone_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2003"
-          },
-          "info": "Agent should look up by the provided phone number",
-          "compare_args": ["phone_number"]
-        },
-        {
-          "action_id": "get_customer_full_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_id",
-          "arguments": {
-            "customer_id": "C1001"
-          },
-          "info": "Agent should get full customer details",
-          "compare_args": ["customer_id"]
-        },
-        {
-          "action_id": "get_bills_0",
-          "requestor": "assistant",
-          "name": "get_bills_for_customer",
-          "arguments": {
-            "customer_id": "C1001"
-          },
-          "info": "Agent should retrieve all bills for the customer",
-          "compare_args": ["customer_id"]
-        },
-        {
-          "action_id": "get_bill_details_0",
-          "requestor": "assistant",
-          "name": "get_details_by_id",
-          "arguments": {
-            "id": "B1001"
-          },
-          "info": "Agent may look up specific bill details",
-          "compare_args": ["id"]
-        },
-        {
-          "action_id": "get_bill_details_1",
-          "requestor": "assistant",
-          "name": "get_details_by_id",
-          "arguments": {
-            "id": "B1002"
-          },
-          "info": "Agent may look up specific bill details",
-          "compare_args": ["id"]
-        }
-      ],
+      "actions": [],
       "env_assertions": null,
       "communicate_info": [
         "$160.50",
@@ -509,7 +412,6 @@
         "Agent should note that line 555-123-2003 (L1003) is Suspended if asked about line status."
       ],
       "reward_basis": [
-        "ACTION",
         "COMMUNICATE",
         "NL_ASSERTION"
       ]
@@ -534,17 +436,7 @@
     },
     "ticket": null,
     "initial_state": {
-      "initialization_data": {
-        "agent_data": {
-          "lines": [
-            {
-              "line_id": "L1001",
-              "data_used_gb": 5.5
-            }
-          ]
-        },
-        "user_data": null
-      },
+      "initialization_data": null,
       "initialization_actions": [
         {
           "env_type": "user",
@@ -576,16 +468,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2001"
-          },
-          "info": "Agent looks up customer",
-          "compare_args": ["phone_number"]
-        },
-        {
           "action_id": "get_line_details_0",
           "requestor": "assistant",
           "name": "get_details_by_id",
@@ -593,7 +475,9 @@
             "id": "L1001"
           },
           "info": "Agent checks line details including current plan",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_plans_0",
@@ -612,27 +496,10 @@
             "line_id": "L1001"
           },
           "info": "Agent checks current data usage",
-          "compare_args": ["customer_id", "line_id"]
-        },
-        {
-          "action_id": "get_current_plan_0",
-          "requestor": "assistant",
-          "name": "get_details_by_id",
-          "arguments": {
-            "id": "P1001"
-          },
-          "info": "Agent looks up current Basic Plan details",
-          "compare_args": ["id"]
-        },
-        {
-          "action_id": "get_target_plan_0",
-          "requestor": "assistant",
-          "name": "get_details_by_id",
-          "arguments": {
-            "id": "P1002"
-          },
-          "info": "Agent looks up Premium Plan details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "customer_id",
+            "line_id"
+          ]
         },
         {
           "action_id": "change_plan_0",
@@ -644,7 +511,11 @@
             "new_plan_id": "P1002"
           },
           "info": "Agent changes to Premium Plan",
-          "compare_args": ["customer_id", "line_id", "new_plan_id"]
+          "compare_args": [
+            "customer_id",
+            "line_id",
+            "new_plan_id"
+          ]
         },
         {
           "action_id": "refuel_data_0",
@@ -656,7 +527,11 @@
             "gb_to_add": 1.0
           },
           "info": "Agent refuels 1GB of data",
-          "compare_args": ["customer_id", "line_id", "gb_to_add"]
+          "compare_args": [
+            "customer_id",
+            "line_id",
+            "gb_to_add"
+          ]
         }
       ],
       "env_assertions": [
@@ -710,7 +585,6 @@
         "Agent must NOT make up plan prices or data limits - all values must come from get_available_plans or get_details_by_id."
       ],
       "reward_basis": [
-        "DB",
         "ENV_ASSERTION",
         "COMMUNICATE",
         "ACTION",
@@ -737,17 +611,7 @@
     },
     "ticket": null,
     "initial_state": {
-      "initialization_data": {
-        "agent_data": {
-          "lines": [
-            {
-              "line_id": "L1001",
-              "data_used_gb": 6.0
-            }
-          ]
-        },
-        "user_data": null
-      },
+      "initialization_data": null,
       "initialization_actions": [
         {
           "env_type": "user",
@@ -789,24 +653,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2001"
-          },
-          "info": "Agent looks up customer first",
-          "compare_args": ["phone_number"]
-        },
-        {
-          "action_id": "user_check_status_0",
-          "requestor": "user",
-          "name": "check_status_bar",
-          "arguments": {},
-          "info": "User checks status bar - will show airplane mode",
-          "compare_args": []
-        },
-        {
           "action_id": "user_toggle_airplane_0",
           "requestor": "user",
           "name": "toggle_airplane_mode",
@@ -820,22 +666,6 @@
           "name": "check_network_status",
           "arguments": {},
           "info": "User checks network after airplane fix - will reveal SIM issue",
-          "compare_args": []
-        },
-        {
-          "action_id": "user_check_sim_0",
-          "requestor": "user",
-          "name": "check_sim_status",
-          "arguments": {},
-          "info": "User checks SIM status",
-          "compare_args": []
-        },
-        {
-          "action_id": "user_reseat_sim_0",
-          "requestor": "user",
-          "name": "reseat_sim_card",
-          "arguments": {},
-          "info": "User reseats SIM card as instructed",
           "compare_args": []
         },
         {
@@ -855,7 +685,10 @@
             "line_id": "L1001"
           },
           "info": "Agent checks data usage after physical issues are fixed",
-          "compare_args": ["customer_id", "line_id"]
+          "compare_args": [
+            "customer_id",
+            "line_id"
+          ]
         },
         {
           "action_id": "refuel_data_0",
@@ -867,7 +700,10 @@
             "gb_to_add": 1.0
           },
           "info": "Agent refuels 1GB of data at $5",
-          "compare_args": ["customer_id", "line_id"]
+          "compare_args": [
+            "customer_id",
+            "line_id"
+          ]
         },
         {
           "action_id": "user_speed_test_0",
@@ -892,10 +728,10 @@
           "env_type": "user",
           "func_name": "assert_sim_status",
           "arguments": {
-            "expected_status": "Ready"
+            "expected_status": "active"
           },
           "assert_value": true,
-          "message": "SIM should be Ready after reseating"
+          "message": "SIM should be active after reseating"
         },
         {
           "env_type": "user",
@@ -961,7 +797,7 @@
       "instructions": {
         "domain": "telecom",
         "reason_for_call": "You want a complete audit of your family plan. You have 5 lines and want to know the status and charges for each one. You also noticed bill B1005 shows $425 but you think it might be wrong.",
-        "known_info": "You are Sarah Johnson. Your primary contact number is 555-123-1002. Your DOB is 1990-11-22. You have 5 lines on an Unlimited Plus family plan. Your bill B1005 shows $425 total.",
+        "known_info": "You are Sarah Johnson. Your primary line phone number is 555-123-2004. Your DOB is 1990-11-22. You have 5 lines on an Unlimited Plus family plan. Your bill B1005 shows $425 total.",
         "unknown_info": "You don't remember all the phone numbers on your plan. You're not sure why B1005 shows as Overdue.",
         "task_instructions": "1. Identify yourself with name Sarah Johnson and DOB 1990-11-22 (the agent should use get_customer_by_name since you're not giving a line phone number directly).\n\n2. Ask the agent to list ALL 5 lines on your account with their phone numbers and status.\n\n3. Ask for a breakdown of your bill B1005 - the agent must get the actual bill details and tell you:\n   - Total: $425.00\n   - What it covers (Unlimited Plus - 5 Lines Family Plan)\n   - Status: Overdue\n   - Due date\n\n4. Express concern that the bill is Overdue and ask to pay it immediately.\n\n5. Ask about the Unlimited Plus plan details ($85/month per line, $0.10/GB refuel).\n\nVERIFY all numbers the agent tells you. If ANY number is wrong (line count, bill amount, plan price), push back and ask them to check again."
       }
@@ -975,7 +811,7 @@
           "func_name": "set_user_info",
           "arguments": {
             "name": "Sarah Johnson",
-            "phone_number": "555-123-1002"
+            "phone_number": "555-123-2004"
           }
         }
       ],
@@ -984,27 +820,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_name",
-          "arguments": {
-            "full_name": "Sarah Johnson",
-            "dob": "1990-11-22"
-          },
-          "info": "Agent looks up customer by name and DOB",
-          "compare_args": ["full_name", "dob"]
-        },
-        {
-          "action_id": "get_customer_full_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_id",
-          "arguments": {
-            "customer_id": "C1002"
-          },
-          "info": "Agent gets full customer details with all lines",
-          "compare_args": ["customer_id"]
-        },
-        {
           "action_id": "get_line_1",
           "requestor": "assistant",
           "name": "get_details_by_id",
@@ -1012,7 +827,9 @@
             "id": "L1004"
           },
           "info": "Agent gets details for line 1",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_line_2",
@@ -1022,7 +839,9 @@
             "id": "L1005"
           },
           "info": "Agent gets details for line 2",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_line_3",
@@ -1032,7 +851,9 @@
             "id": "L1006"
           },
           "info": "Agent gets details for line 3",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_line_4",
@@ -1042,7 +863,9 @@
             "id": "L1007"
           },
           "info": "Agent gets details for line 4",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_line_5",
@@ -1052,27 +875,9 @@
             "id": "L1008"
           },
           "info": "Agent gets details for line 5",
-          "compare_args": ["id"]
-        },
-        {
-          "action_id": "get_bills_0",
-          "requestor": "assistant",
-          "name": "get_bills_for_customer",
-          "arguments": {
-            "customer_id": "C1002"
-          },
-          "info": "Agent retrieves customer bills",
-          "compare_args": ["customer_id"]
-        },
-        {
-          "action_id": "get_bill_details_0",
-          "requestor": "assistant",
-          "name": "get_details_by_id",
-          "arguments": {
-            "id": "B1005"
-          },
-          "info": "Agent gets detailed breakdown of bill B1005",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "send_payment_0",
@@ -1083,7 +888,10 @@
             "bill_id": "B1005"
           },
           "info": "Agent sends payment request for overdue bill",
-          "compare_args": ["customer_id", "bill_id"]
+          "compare_args": [
+            "customer_id",
+            "bill_id"
+          ]
         },
         {
           "action_id": "user_accept_payment_0",
@@ -1102,7 +910,10 @@
             "bill_id": "B1005"
           },
           "info": "Agent processes the payment",
-          "compare_args": ["customer_id", "bill_id"]
+          "compare_args": [
+            "customer_id",
+            "bill_id"
+          ]
         }
       ],
       "env_assertions": [
@@ -1138,7 +949,6 @@
         "Agent must explain that the bill is Overdue and needs to be paid."
       ],
       "reward_basis": [
-        "DB",
         "ACTION",
         "COMMUNICATE",
         "NL_ASSERTION"
@@ -1153,7 +963,7 @@
       "notes": "Tests agent's ability to consider multiple interacting factors and guide user through systematic troubleshooting."
     },
     "user_scenario": {
-      "persona": "\nAs a 42-year-old independent management consultant, you've built your career on being available to clients wherever you are. Your work takes you around the world - last month Singapore, this month Tokyo, next month São Paulo. Your phone is your lifeline to clients who pay premium rates for your availability.\n\nYou're technically competent, comfortable with apps and settings, but you're not an engineer. You use tools like VPNs for security when accessing client data from hotel WiFi, without necessarily understanding how they work at a network level.\n\nYour communication style is professional and solution-focused. You've been on hundreds of calls with client IT departments and vendors, so you know how to describe problems clearly. You're patient but efficient - you want to solve the problem, not chat.\n\nWhen something breaks, you approach it logically. What changed? What were you doing when it stopped working? You provide relevant context without being prompted because you know it helps troubleshooting.\n\nYou're frustrated because dropped calls cost you money and credibility. A client hearing 'Can you hear me now?' three times in a presentation doesn't inspire confidence. But you channel that frustration into problem-solving, not blame.\n\nYou appreciate technical explanations. If an agent says 'VPN can interfere with WiFi calling,' you want to understand why. The more you understand, the better you can prevent future issues.\n",
+      "persona": "\nAs a 42-year-old independent management consultant, you've built your career on being available to clients wherever you are. Your work takes you around the world - last month Singapore, this month Tokyo, next month S\u00e3o Paulo. Your phone is your lifeline to clients who pay premium rates for your availability.\n\nYou're technically competent, comfortable with apps and settings, but you're not an engineer. You use tools like VPNs for security when accessing client data from hotel WiFi, without necessarily understanding how they work at a network level.\n\nYour communication style is professional and solution-focused. You've been on hundreds of calls with client IT departments and vendors, so you know how to describe problems clearly. You're patient but efficient - you want to solve the problem, not chat.\n\nWhen something breaks, you approach it logically. What changed? What were you doing when it stopped working? You provide relevant context without being prompted because you know it helps troubleshooting.\n\nYou're frustrated because dropped calls cost you money and credibility. A client hearing 'Can you hear me now?' three times in a presentation doesn't inspire confidence. But you channel that frustration into problem-solving, not blame.\n\nYou appreciate technical explanations. If an agent says 'VPN can interfere with WiFi calling,' you want to understand why. The more you understand, the better you can prevent future issues.\n",
       "instructions": {
         "domain": "telecom",
         "reason_for_call": "You're in a hotel in Japan for business. Your phone calls keep dropping or have terrible quality. You need this fixed urgently for client calls.",
@@ -1202,45 +1012,11 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2002"
-          },
-          "info": "Agent looks up customer",
-          "compare_args": ["phone_number"]
-        },
-        {
           "action_id": "user_check_network_0",
           "requestor": "user",
           "name": "check_network_status",
           "arguments": {},
           "info": "User checks network status",
-          "compare_args": []
-        },
-        {
-          "action_id": "user_check_wifi_0",
-          "requestor": "user",
-          "name": "check_wifi_status",
-          "arguments": {},
-          "info": "User checks WiFi status",
-          "compare_args": []
-        },
-        {
-          "action_id": "user_check_vpn_0",
-          "requestor": "user",
-          "name": "check_vpn_status",
-          "arguments": {},
-          "info": "User checks VPN status",
-          "compare_args": []
-        },
-        {
-          "action_id": "user_check_wifi_calling_0",
-          "requestor": "user",
-          "name": "check_wifi_calling_status",
-          "arguments": {},
-          "info": "User checks WiFi calling status",
           "compare_args": []
         },
         {
@@ -1320,16 +1096,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2003"
-          },
-          "info": "Agent looks up by phone number",
-          "compare_args": ["phone_number"]
-        },
-        {
           "action_id": "get_line_details_0",
           "requestor": "assistant",
           "name": "get_details_by_id",
@@ -1337,27 +1103,9 @@
             "id": "L1003"
           },
           "info": "Agent gets line details to see suspension info",
-          "compare_args": ["id"]
-        },
-        {
-          "action_id": "get_customer_full_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_id",
-          "arguments": {
-            "customer_id": "C1001"
-          },
-          "info": "Agent gets full customer record",
-          "compare_args": ["customer_id"]
-        },
-        {
-          "action_id": "get_bills_0",
-          "requestor": "assistant",
-          "name": "get_bills_for_customer",
-          "arguments": {
-            "customer_id": "C1001"
-          },
-          "info": "Agent checks billing status",
-          "compare_args": ["customer_id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "resume_line_0",
@@ -1368,7 +1116,10 @@
             "line_id": "L1003"
           },
           "info": "Agent resumes the suspended line",
-          "compare_args": ["customer_id", "line_id"]
+          "compare_args": [
+            "customer_id",
+            "line_id"
+          ]
         }
       ],
       "env_assertions": [
@@ -1441,16 +1192,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2002"
-          },
-          "info": "Agent looks up customer",
-          "compare_args": ["phone_number"]
-        },
-        {
           "action_id": "get_line_details_0",
           "requestor": "assistant",
           "name": "get_details_by_id",
@@ -1458,7 +1199,9 @@
             "id": "L1002"
           },
           "info": "Agent gets line details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_device_details_0",
@@ -1468,17 +1211,9 @@
             "id": "D1002"
           },
           "info": "Agent checks device for eSIM capability",
-          "compare_args": ["id"]
-        },
-        {
-          "action_id": "get_current_plan_0",
-          "requestor": "assistant",
-          "name": "get_details_by_id",
-          "arguments": {
-            "id": "P1002"
-          },
-          "info": "Agent looks up current plan details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_plans_0",
@@ -1551,27 +1286,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_name",
-          "arguments": {
-            "full_name": "John Smith",
-            "dob": "1985-06-15"
-          },
-          "info": "Agent looks up customer by name and DOB",
-          "compare_args": ["full_name", "dob"]
-        },
-        {
-          "action_id": "get_customer_full_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_id",
-          "arguments": {
-            "customer_id": "C1001"
-          },
-          "info": "Agent gets full customer record",
-          "compare_args": ["customer_id"]
-        },
-        {
           "action_id": "get_line_1",
           "requestor": "assistant",
           "name": "get_details_by_id",
@@ -1579,7 +1293,9 @@
             "id": "L1001"
           },
           "info": "Agent gets line 1 details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_line_2",
@@ -1589,7 +1305,9 @@
             "id": "L1002"
           },
           "info": "Agent gets line 2 details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_line_3",
@@ -1599,17 +1317,9 @@
             "id": "L1003"
           },
           "info": "Agent gets line 3 details",
-          "compare_args": ["id"]
-        },
-        {
-          "action_id": "get_bills_0",
-          "requestor": "assistant",
-          "name": "get_bills_for_customer",
-          "arguments": {
-            "customer_id": "C1001"
-          },
-          "info": "Agent retrieves all bills",
-          "compare_args": ["customer_id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_device_1",
@@ -1619,7 +1329,9 @@
             "id": "D1001"
           },
           "info": "Agent gets device 1 details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_device_2",
@@ -1629,7 +1341,9 @@
             "id": "D1002"
           },
           "info": "Agent gets device 2 details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_device_3",
@@ -1639,27 +1353,9 @@
             "id": "D1003"
           },
           "info": "Agent gets device 3 details",
-          "compare_args": ["id"]
-        },
-        {
-          "action_id": "get_plan_1",
-          "requestor": "assistant",
-          "name": "get_details_by_id",
-          "arguments": {
-            "id": "P1001"
-          },
-          "info": "Agent gets Basic Plan details",
-          "compare_args": ["id"]
-        },
-        {
-          "action_id": "get_plan_2",
-          "requestor": "assistant",
-          "name": "get_details_by_id",
-          "arguments": {
-            "id": "P1002"
-          },
-          "info": "Agent gets Premium Plan details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         }
       ],
       "env_assertions": null,
@@ -1737,48 +1433,7 @@
       "message_history": null
     },
     "evaluation_criteria": {
-      "actions": [
-        {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2001"
-          },
-          "info": "Agent looks up customer",
-          "compare_args": ["phone_number"]
-        },
-        {
-          "action_id": "get_customer_full_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_id",
-          "arguments": {
-            "customer_id": "C1001"
-          },
-          "info": "Agent gets full customer details including goodwill credit",
-          "compare_args": ["customer_id"]
-        },
-        {
-          "action_id": "get_bills_0",
-          "requestor": "assistant",
-          "name": "get_bills_for_customer",
-          "arguments": {
-            "customer_id": "C1001"
-          },
-          "info": "Agent retrieves bills",
-          "compare_args": ["customer_id"]
-        },
-        {
-          "action_id": "get_bill_details_0",
-          "requestor": "assistant",
-          "name": "get_details_by_id",
-          "arguments": {
-            "id": "B1002"
-          },
-          "info": "Agent gets detailed line items for B1002",
-          "compare_args": ["id"]
-        }
-      ],
+      "actions": [],
       "env_assertions": null,
       "communicate_info": [
         "$150",
@@ -1798,7 +1453,6 @@
         "Agent should break down the bill line items: Basic Plan $40 + Premium Plan $65 + Basic Plan $40 + Suspension Fee $5 = $150."
       ],
       "reward_basis": [
-        "ACTION",
         "COMMUNICATE",
         "NL_ASSERTION"
       ]
@@ -1816,7 +1470,7 @@
       "instructions": {
         "domain": "telecom",
         "reason_for_call": "You want a complete device and contract overview for all 5 lines on your family plan. You need to know which devices support eSIM and when each contract ends.",
-        "known_info": "You are Sarah Johnson. Your contact is 555-123-1002. DOB 1990-11-22. You have 5 lines: L1004, L1005, L1006, L1007, L1008.",
+        "known_info": "You are Sarah Johnson. Your contact is 555-123-2004. DOB 1990-11-22. You have 5 lines: L1004, L1005, L1006, L1007, L1008.",
         "unknown_info": "You don't remember which specific devices are on each line or their eSIM capabilities.",
         "task_instructions": "1. Identify yourself as Sarah Johnson with DOB 1990-11-22.\n\n2. Tell agent you need a complete device overview for all 5 lines.\n\n3. For EACH line, you need:\n   - Phone number\n   - Device model\n   - Is it eSIM capable? (yes/no)\n   - Contract end date\n   \n4. Expected data (verify ALL):\n   - L1004: 555-123-2004, Galaxy S23 (D1004), eSIM: yes, Contract: 2027-02-28\n   - L1005: 555-123-2005, Pixel 7 (D1005), eSIM: yes, Contract: 2027-02-28\n   - L1006: 555-123-2006, iPhone 14 (D1006), eSIM: yes, Contract: 2027-02-28\n   - L1007: 555-123-2007, OnePlus 11 (D1007), eSIM: yes, Contract: 2027-02-28\n   - L1008: 555-123-2008, iPad Pro (D1008), eSIM: yes, Contract: 2027-02-28\n   \n5. If agent gets ANY device wrong or guesses at eSIM capability, push back.\n\nConsider resolved when all 5 lines have accurate device and contract information."
       }
@@ -1830,7 +1484,7 @@
           "func_name": "set_user_info",
           "arguments": {
             "name": "Sarah Johnson",
-            "phone_number": "555-123-1002"
+            "phone_number": "555-123-2004"
           }
         }
       ],
@@ -1839,27 +1493,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_name",
-          "arguments": {
-            "full_name": "Sarah Johnson",
-            "dob": "1990-11-22"
-          },
-          "info": "Agent looks up customer by name",
-          "compare_args": ["full_name", "dob"]
-        },
-        {
-          "action_id": "get_customer_full_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_id",
-          "arguments": {
-            "customer_id": "C1002"
-          },
-          "info": "Agent gets full customer details with all lines",
-          "compare_args": ["customer_id"]
-        },
-        {
           "action_id": "get_line_1",
           "requestor": "assistant",
           "name": "get_details_by_id",
@@ -1867,7 +1500,9 @@
             "id": "L1004"
           },
           "info": "Agent looks up line 1",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_line_2",
@@ -1877,7 +1512,9 @@
             "id": "L1005"
           },
           "info": "Agent looks up line 2",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_line_3",
@@ -1887,7 +1524,9 @@
             "id": "L1006"
           },
           "info": "Agent looks up line 3",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_line_4",
@@ -1897,7 +1536,9 @@
             "id": "L1007"
           },
           "info": "Agent looks up line 4",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_line_5",
@@ -1907,7 +1548,9 @@
             "id": "L1008"
           },
           "info": "Agent looks up line 5",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_device_1",
@@ -1917,7 +1560,9 @@
             "id": "D1004"
           },
           "info": "Agent looks up device for L1004",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_device_2",
@@ -1927,7 +1572,9 @@
             "id": "D1005"
           },
           "info": "Agent looks up device for L1005",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_device_3",
@@ -1937,7 +1584,9 @@
             "id": "D1006"
           },
           "info": "Agent looks up device for L1006",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_device_4",
@@ -1947,7 +1596,9 @@
             "id": "D1007"
           },
           "info": "Agent looks up device for L1007",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_device_5",
@@ -1957,7 +1608,9 @@
             "id": "D1008"
           },
           "info": "Agent looks up device for L1008",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         }
       ],
       "env_assertions": null,
@@ -2037,16 +1690,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2002"
-          },
-          "info": "Agent looks up customer",
-          "compare_args": ["phone_number"]
-        },
-        {
           "action_id": "get_line_details_0",
           "requestor": "assistant",
           "name": "get_details_by_id",
@@ -2054,7 +1697,9 @@
             "id": "L1002"
           },
           "info": "Agent checks line for roaming status",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_data_usage_0",
@@ -2065,27 +1710,10 @@
             "line_id": "L1002"
           },
           "info": "Agent checks data usage",
-          "compare_args": ["customer_id", "line_id"]
-        },
-        {
-          "action_id": "get_bills_0",
-          "requestor": "assistant",
-          "name": "get_bills_for_customer",
-          "arguments": {
-            "customer_id": "C1001"
-          },
-          "info": "Agent checks for outstanding bills",
-          "compare_args": ["customer_id"]
-        },
-        {
-          "action_id": "get_bill_details_0",
-          "requestor": "assistant",
-          "name": "get_details_by_id",
-          "arguments": {
-            "id": "B1002"
-          },
-          "info": "Agent gets bill details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "customer_id",
+            "line_id"
+          ]
         }
       ],
       "env_assertions": [
@@ -2168,16 +1796,6 @@
     "evaluation_criteria": {
       "actions": [
         {
-          "action_id": "lookup_customer_0",
-          "requestor": "assistant",
-          "name": "get_customer_by_phone",
-          "arguments": {
-            "phone_number": "555-123-2002"
-          },
-          "info": "Agent looks up customer",
-          "compare_args": ["phone_number"]
-        },
-        {
           "action_id": "get_line_details_0",
           "requestor": "assistant",
           "name": "get_details_by_id",
@@ -2185,7 +1803,9 @@
             "id": "L1002"
           },
           "info": "Agent gets line details including SIM replacement history",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "get_device_details_0",
@@ -2195,7 +1815,9 @@
             "id": "D1002"
           },
           "info": "Agent checks device details",
-          "compare_args": ["id"]
+          "compare_args": [
+            "id"
+          ]
         },
         {
           "action_id": "user_check_network_0",
@@ -2204,14 +1826,6 @@
           "arguments": {},
           "info": "User checks network as part of troubleshooting",
           "compare_args": []
-        },
-        {
-          "action_id": "user_check_sim_0",
-          "requestor": "user",
-          "name": "check_sim_status",
-          "arguments": {},
-          "info": "User checks SIM status",
-          "compare_args": []
         }
       ],
       "env_assertions": [
@@ -2219,10 +1833,10 @@
           "env_type": "user",
           "func_name": "assert_sim_status",
           "arguments": {
-            "expected_status": "Ready"
+            "expected_status": "active"
           },
           "assert_value": true,
-          "message": "SIM should show Ready status after verification"
+          "message": "SIM should show active status after verification"
         }
       ],
       "communicate_info": [

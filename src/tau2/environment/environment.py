@@ -328,7 +328,21 @@ class Environment:
                 expected_content = json.loads(expected_response.content)
             except json.JSONDecodeError:
                 expected_content = expected_response.content
-            if content != expected_content:
+            
+            # Strip verbose padding keys (start with '_') for comparison
+            # These contain random data that differs between runs
+            def strip_verbose_keys(obj):
+                if isinstance(obj, dict):
+                    return {k: strip_verbose_keys(v) for k, v in obj.items() 
+                            if not k.startswith('_')}
+                elif isinstance(obj, list):
+                    return [strip_verbose_keys(item) for item in obj]
+                return obj
+            
+            content_clean = strip_verbose_keys(content) if isinstance(content, dict) else content
+            expected_clean = strip_verbose_keys(expected_content) if isinstance(expected_content, dict) else expected_content
+            
+            if content_clean != expected_clean:
                 raise ValueError(
                     f"Tool call:\n{tool_call}\n\nReturned:\n{response}\n\nExpected:\n{expected_response}"
                 )
