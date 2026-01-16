@@ -1,5 +1,6 @@
 from copy import deepcopy
 from typing import List, Optional
+import json
 
 from loguru import logger
 from pydantic import BaseModel
@@ -20,6 +21,169 @@ from tau2.data_model.message import (
 from tau2.data_model.tasks import Action, Task
 from tau2.environment.tool import Tool, as_tool
 from tau2.utils.llm_utils import generate
+
+# Context window limits for different models (in tokens)
+MODEL_CONTEXT_LIMITS = {
+    "gpt-4o": 128000,
+    "gpt-4o-mini": 128000,
+    "gpt-4.1": 128000,
+    "gpt-4-turbo": 128000,
+    "gpt-3.5-turbo": 16000,
+    "gpt-5.2": 400000,
+    "claude-3-5-sonnet": 200000,
+    "claude-sonnet-4-5": 200000,
+    "claude-opus-4-5": 200000,
+}
+DEFAULT_CONTEXT_LIMIT = 128000
+CONTEXT_BUFFER = 15000  # Leave buffer for response and overhead
+
+
+def _estimate_tokens(messages: list, tools: list = None) -> int:
+    """Estimate token count for messages and tools.
+    
+    Uses conservative 3 chars per token ratio to avoid underestimation.
+    Also adds overhead for JSON structure and message metadata.
+    """
+    total_chars = 0
+    for msg in messages:
+        content = getattr(msg, 'content', '') or ''
+        total_chars += len(content)
+        # Add overhead for message structure (role, etc.)
+        total_chars += 50
+        # Account for tool calls in assistant messages
+        if hasattr(msg, 'tool_calls') and msg.tool_calls:
+            for tc in msg.tool_calls:
+                try:
+                    tc_str = json.dumps(tc.model_dump() if hasattr(tc, 'model_dump') else str(tc))
+                    total_chars += len(tc_str)
+                except:
+                    total_chars += 500  # Fallback estimate
+    
+    # Estimate tools definition size
+    if tools:
+        for tool in tools:
+            try:
+                tool_str = str(tool.to_json_schema() if hasattr(tool, 'to_json_schema') else str(tool))
+                total_chars += len(tool_str)
+            except:
+                total_chars += 1000  # Fallback estimate per tool
+    
+    # Conservative estimate: 3 chars per token (to avoid underestimation)
+    return total_chars // 3
+
+
+def _get_context_limit(model: str) -> int:
+    """Get context limit for a model."""
+    if model is None:
+        return DEFAULT_CONTEXT_LIMIT
+    for model_prefix, limit in MODEL_CONTEXT_LIMITS.items():
+        if model_prefix in model.lower():
+            return limit
+    return DEFAULT_CONTEXT_LIMIT
+
+
+def _truncate_messages_to_fit(
+    system_messages: list,
+    messages: list,
+    tools: list,
+    model: str,
+) -> list:
+    """Truncate messages to fit within context limit, keeping most recent.
+    
+    IMPORTANT: Preserves tool_call -> tool_response pairs to avoid API errors.
+    """
+    context_limit = _get_context_limit(model) - CONTEXT_BUFFER
+    
+    # Always keep system messages
+    system_tokens = _estimate_tokens(system_messages, tools)
+    available_tokens = context_limit - system_tokens
+    
+    logger.debug(f"Context check: model={model}, limit={context_limit}, system_tokens={system_tokens}, available={available_tokens}")
+    
+    if available_tokens <= 0:
+        logger.warning(f"System messages alone exceed context limit! system_tokens={system_tokens}")
+        return messages[-5:]  # Keep at least some recent messages
+    
+    # Check if truncation is needed
+    current_tokens = _estimate_tokens(messages)
+    logger.debug(f"Current message tokens: {current_tokens}, available: {available_tokens}")
+    
+    if current_tokens <= available_tokens:
+        return messages  # No truncation needed
+    
+    logger.info(f"Truncation needed: {current_tokens} tokens > {available_tokens} available")
+    
+    # Group messages into "atomic units" that must stay together
+    # A tool_call message must be followed by its tool_response(s)
+    atomic_groups = []
+    i = 0
+    while i < len(messages):
+        msg = messages[i]
+        group = [msg]
+        
+        # Check if this is an assistant message with tool_calls
+        has_tool_calls = (
+            hasattr(msg, 'tool_calls') and msg.tool_calls and 
+            hasattr(msg, 'role') and getattr(msg, 'role', None) == 'assistant'
+        )
+        
+        if has_tool_calls:
+            # Collect all following tool messages that respond to this
+            tool_call_ids = {tc.id for tc in msg.tool_calls if hasattr(tc, 'id')}
+            j = i + 1
+            while j < len(messages) and tool_call_ids:
+                next_msg = messages[j]
+                msg_role = getattr(next_msg, 'role', None)
+                if msg_role == 'tool':
+                    group.append(next_msg)
+                    # Remove the tool_call_id if this message responds to it
+                    msg_id = getattr(next_msg, 'tool_call_id', None) or getattr(next_msg, 'id', None)
+                    tool_call_ids.discard(msg_id)
+                    j += 1
+                else:
+                    break
+            i = j
+        else:
+            i += 1
+        
+        atomic_groups.append(group)
+    
+    # Now truncate by atomic groups, keeping most recent
+    truncated_groups = []
+    running_tokens = 0
+    
+    for group in reversed(atomic_groups):
+        group_tokens = _estimate_tokens(group)
+        if running_tokens + group_tokens <= available_tokens:
+            truncated_groups.insert(0, group)
+            running_tokens += group_tokens
+        else:
+            logger.debug(f"Skipping message group with {group_tokens} tokens")
+    
+    # Flatten groups back to messages
+    truncated = []
+    for group in truncated_groups:
+        truncated.extend(group)
+    
+    if len(truncated) < len(messages):
+        removed = len(messages) - len(truncated)
+        logger.warning(
+            f"Context truncation: removed {removed} oldest messages "
+            f"(estimated {current_tokens} -> {running_tokens} tokens) to fit {context_limit + CONTEXT_BUFFER} model limit"
+        )
+    
+    # Safety check - if we still have too many, be more aggressive but keep pairs
+    final_tokens = _estimate_tokens(truncated)
+    if final_tokens > available_tokens and len(truncated_groups) > 2:
+        logger.warning(f"Still over limit after truncation ({final_tokens} > {available_tokens}), removing more groups...")
+        # Keep only the last half of groups
+        truncated_groups = truncated_groups[len(truncated_groups)//2:]
+        truncated = []
+        for group in truncated_groups:
+            truncated.extend(group)
+        logger.warning(f"Aggressive truncation: kept last {len(truncated)} messages")
+    
+    return truncated
 
 AGENT_INSTRUCTION = """
 You are a customer service agent that helps the user according to the <policy> provided below.
@@ -104,7 +268,16 @@ class LLMAgent(LocalAgent[LLMAgentState]):
             state.messages.extend(message.tool_messages)
         else:
             state.messages.append(message)
-        messages = state.system_messages + state.messages
+        
+        # Truncate messages if they exceed context limit
+        truncated_messages = _truncate_messages_to_fit(
+            system_messages=state.system_messages,
+            messages=state.messages,
+            tools=self.tools,
+            model=self.llm,
+        )
+        
+        messages = state.system_messages + truncated_messages
         assistant_message = generate(
             model=self.llm,
             tools=self.tools,
@@ -232,7 +405,16 @@ class LLMGTAgent(LocalAgent[LLMAgentState]):
             state.messages.extend(message.tool_messages)
         else:
             state.messages.append(message)
-        messages = state.system_messages + state.messages
+        
+        # Truncate messages if they exceed context limit
+        truncated_messages = _truncate_messages_to_fit(
+            system_messages=state.system_messages,
+            messages=state.messages,
+            tools=self.tools,
+            model=self.llm,
+        )
+        
+        messages = state.system_messages + truncated_messages
         assistant_message = generate(
             model=self.llm,
             tools=self.tools,
@@ -452,7 +634,16 @@ class LLMSoloAgent(LocalAgent[LLMAgentState]):
             assert len(state.messages) == 0, "Message history should be empty"
         else:
             state.messages.append(message)
-        messages = state.system_messages + state.messages
+        
+        # Truncate messages if they exceed context limit
+        truncated_messages = _truncate_messages_to_fit(
+            system_messages=state.system_messages,
+            messages=state.messages,
+            tools=self.tools,
+            model=self.llm,
+        )
+        
+        messages = state.system_messages + truncated_messages
         assistant_message = generate(
             model=self.llm,
             tools=self.tools,
